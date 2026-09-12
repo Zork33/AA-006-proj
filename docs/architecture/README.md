@@ -70,6 +70,7 @@
 ```sql
 CREATE TABLE leads (
   id              SERIAL PRIMARY KEY,
+  lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер заявки ( Lead-0001)
   name            VARCHAR(255) NOT NULL,
   phone           VARCHAR(20) NOT NULL,
   service_id      INTEGER REFERENCES services(id),
@@ -84,17 +85,15 @@ CREATE TABLE leads (
 CREATE INDEX idx_leads_phone ON leads(phone);
 CREATE INDEX idx_leads_partner ON leads(partner_id);
 CREATE INDEX idx_leads_status ON leads(status);
+CREATE INDEX idx_leads_number ON leads(lead_number);
 ```
 
 ### Правила дедупликации
 
 При POST /api/leads:
-1. Проверка: есть ли заявка с таким `phone` за последние 24 часа
-2. Если да → **не создаём новую заявку**, а обновляем существующую:
-   - `service_id` = новая услуга (объединение описаний)
-   - `updated_at` = NOW()
-   - Отправляем уведомление: «Повторная заявка от [телефон], услуга: [услуга]»
-3. Если нет → создаём новую заявку с status = NEW
+1. Проверка: есть ли заявка с таким `phone` + `service_id` + `partner_id` за последние 24 часа
+2. Если да → ответ 409 Conflict «Заявка уже принята»
+3. Если нет → создаём новую заявку с уникальным `lead_number` и status = NEW
 
 ### services (Услуги)
 
