@@ -76,7 +76,7 @@ CREATE TABLE leads (
   partner_id      INTEGER REFERENCES partners(id),
   source          VARCHAR(20) NOT NULL DEFAULT 'QR',  -- QR | partner
   attribution     VARCHAR(20) NOT NULL DEFAULT 'first_touch',
-  status          VARCHAR(20) NOT NULL DEFAULT 'NEW',  -- NEW | CONTACTED | CONVERTED | REJECTED
+  status          VARCHAR(20) NOT NULL DEFAULT 'NEW',  -- NEW | CONTACTED | QUALIFIED | CONVERTED | REJECTED | DUPLICATE | CANCELLED
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -85,6 +85,16 @@ CREATE INDEX idx_leads_phone ON leads(phone);
 CREATE INDEX idx_leads_partner ON leads(partner_id);
 CREATE INDEX idx_leads_status ON leads(status);
 ```
+
+### Правила дедупликации
+
+При POST /api/leads:
+1. Проверка: есть ли заявка с таким `phone` за последние 24 часа
+2. Если да → **не создаём новую заявку**, а обновляем существующую:
+   - `service_id` = новая услуга (объединение описаний)
+   - `updated_at` = NOW()
+   - Отправляем уведомление: «Повторная заявка от [телефон], услуга: [услуга]»
+3. Если нет → создаём новую заявку с status = NEW
 
 ### services (Услуги)
 
