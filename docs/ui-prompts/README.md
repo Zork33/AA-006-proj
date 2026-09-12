@@ -1,6 +1,6 @@
 # Промпт: Визуальный интерфейс — Сайт-визитка с QR-кодом и реферальной системой
 
-> Связанные документы: [PRD](../prd/README.md) | [Отчёт по полноте PRD](../prd/PRD_completeness_report.md) | [Архитектура](../architecture/README.md) | [BDD](../bdd/README.md)
+> Связанные документы: [PRD](../prd/README.md) | [Отчёт по полноте PRD](../prd/PRD_completeness_report.md) | [Архитектура](../architecture/README.md) | [Инфраструктура](../infrastructure/README.md) | [BDD](../bdd/README.md)
 
 ## Контекст
 
