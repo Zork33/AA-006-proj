@@ -1,6 +1,6 @@
 # Инфраструктура и платформа
 
-> Связанные документы: [Архитектура](../architecture/README.md) | [PRD](../prd/README.md) | [Промпт для UI](../ui-prompts/README.md)
+> Связанные документы: [Архитектура](../architecture/README.md) | [PRD](../prd/README.md) | [Промпт для UI](../ui-prompts/README.md) | [План развития](../roadmap/README.md)
 
 ## Выбор платформы: Selectel
 

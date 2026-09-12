@@ -1,6 +1,6 @@
 # Product Requirements Document
 
-> Связанные документы: [Отчёт по полноте PRD](PRD_completeness_report.md) | [Промпт для UI](../ui-prompts/README.md) | [Архитектура](../architecture/README.md) | [Инфраструктура](../infrastructure/README.md) | [BDD](../bdd/README.md)
+> Связанные документы: [Отчёт по полноте PRD](PRD_completeness_report.md) | [Промпт для UI](../ui-prompts/README.md) | [Архитектура](../architecture/README.md) | [Инфраструктура](../infrastructure/README.md) | [План развития](../roadmap/README.md) | [BDD](../bdd/README.md)
 
 ## Проект: Сайт-визитка с формой заявки и реферальной системой
 
