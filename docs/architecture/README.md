@@ -70,7 +70,7 @@
 ```sql
 CREATE TABLE leads (
   id              SERIAL PRIMARY KEY,
-  lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер заявки ( Lead-0001)
+  lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер заявки (LEAD-0001 или PARTNER-0001)
   name            VARCHAR(255) NOT NULL,
   phone           VARCHAR(20) NOT NULL,
   service_id      INTEGER REFERENCES services(id),
@@ -95,6 +95,11 @@ CREATE INDEX idx_leads_number ON leads(lead_number);
 2. Если да → ответ 409 Conflict «Заявка уже принята»
 3. Если нет → создаём новую заявку с уникальным `lead_number` и status = NEW
 
+### Формирование номера заявки
+
+- Если заявка от партнёра: `{PARTNER_CODE}-{порядковый номер}` (например: `IVAN-0001`)
+- Если заявка от QR: `QR-{порядковый номер}` (например: `QR-0001`)
+
 ### services (Услуги)
 
 ```sql
@@ -116,6 +121,7 @@ CREATE TABLE partners (
   id              SERIAL PRIMARY KEY,
   name            VARCHAR(255) NOT NULL,
   email           VARCHAR(255) UNIQUE NOT NULL,
+  partner_code    VARCHAR(20) UNIQUE NOT NULL,  -- код партнёра для номеров заявок (IVAN, ABC123)
   status          VARCHAR(20) NOT NULL DEFAULT 'active',  -- active | blocked
   referral_token  VARCHAR(64) UNIQUE NOT NULL,
   created_at      TIMESTAMP DEFAULT NOW(),
@@ -123,6 +129,7 @@ CREATE TABLE partners (
 );
 
 CREATE UNIQUE INDEX idx_partners_token ON partners(referral_token);
+CREATE UNIQUE INDEX idx_partners_code ON partners(partner_code);
 ```
 
 ### visits (Посещения / Атрибуция)
