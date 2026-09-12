@@ -1,6 +1,6 @@
 # Отчёт по полноте PRD
 
-> Связанные документы: [PRD](README.md) | [Промпт для UI](../ui-prompts/README.md) | [BDD](../bdd/README.md)
+> Связанные документы: [PRD](README.md) | [Промпт для UI](../ui-prompts/README.md) | [Архитектура](../architecture/README.md) | [BDD](../bdd/README.md)
 
 ## Проект: сайт-визитка с QR-кодом, услугами и реферальной системой
 
