@@ -16,8 +16,8 @@
                      │
           ┌──────────┴──────────┐
           ▼                     ▼
-       Next.js               NestJS
-                                │
+       Vue + Tailwind        NestJS
+       (статический)            │
                         ┌───────┴────────┐
                         ▼                ▼
                   PostgreSQL           S3
@@ -38,7 +38,7 @@
 
 ### Почему 4 GB RAM, а не 2 GB
 
-Разница — 250 ₽/мес. Next.js + NestJS + Nginx + Docker + monitoring гораздо комфортнее работают с 4 GB. Для production это оправдано.
+Разница — 250 ₽/мес. Vue (статический) + NestJS + Nginx + Docker + monitoring гораздо комфортнее работают с 4 GB. Для production это оправдано.
 
 ### Почему Managed PostgreSQL, а не Docker
 
