@@ -134,6 +134,8 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 
 ## API (Основные эндпоинты)
 
+> Полная спецификация: OpenAPI 3.0 (Swagger). Документация генерируется из кода и доступна по адресу `/api/docs`.
+
 ### Публичные
 
 | Метод | Путь | Описание |
@@ -231,3 +233,11 @@ CORS_ORIGIN=https://example.com
 6. Настроить MAX-бота на dev.max.ru
 7. Настроить алерты на health check
 ```
+
+## OpenAPI / Swagger
+
+- Спецификация: OpenAPI 3.0
+- Генерация: автоматическая из аннотаций в коде (fastify-swagger или @nestjs/swagger)
+- Доступ: `/api/docs` (Swagger UI) в development и staging
+- В production: `/api/docs` доступен только администраторам (по JWT)
+- Формат: JSON (`/api/docs.json`) и YAML (`/api/docs.yaml`) для интеграции с Postman/Insomnia
