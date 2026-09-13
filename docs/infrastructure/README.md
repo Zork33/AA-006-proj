@@ -16,7 +16,7 @@
                      │
           ┌──────────┴──────────┐
           ▼                     ▼
-       Svelte + Tailwind       Fastify
+       Svelte + UnoCSS          Fastify
        (статический)            │
                         ┌───────┴────────┐
                         ▼                ▼

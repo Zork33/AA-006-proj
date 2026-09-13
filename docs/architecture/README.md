@@ -14,7 +14,7 @@
 
 | Компонент | Технология | Провайдер |
 |---|---|---|
-| Frontend | Svelte + Tailwind CSS | Selectel / Nginx (статика) |
+| Frontend | Svelte + UnoCSS | Selectel / Nginx (статика) |
 | Backend API | Node.js (TypeScript, Fastify) | Selectel VPS |
 | База данных | PostgreSQL 15+ | Selectel Managed PostgreSQL |
 | Уведомления | MAX Bot API | dev.max.ru |
@@ -32,7 +32,7 @@
                        │
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│              Frontend (Svelte + Tailwind)            │
+│              Frontend (Svelte + UnoCSS)              │
 │  - Лендинг ( Hero → Услуги → Форма → CTA )          │
 │  - Админ-панель ( /admin )                          │
 │  - Сохранение ref-токена в cookie                   │

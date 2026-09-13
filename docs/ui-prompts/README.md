@@ -9,7 +9,7 @@
 ## Стек
 
 - Svelte (SvelteKit или Vite + Svelte)
-- Tailwind CSS
+- UnoCSS (Tailwind-совместимый синтаксис через `@unocss/preset-wind`)
 - Mobile-first (QR сканируют с телефона)
 
 ## Страницы для реализации
