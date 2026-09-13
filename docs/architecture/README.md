@@ -134,10 +134,16 @@ CREATE TABLE partners (
   id              SERIAL PRIMARY KEY,
   name            VARCHAR(255) NOT NULL,
   email           VARCHAR(255) UNIQUE NOT NULL,
-  partner_code    VARCHAR(20) UNIQUE NOT NULL,  -- код партнёра для номеров заявок (IVAN, ABC123)
-  status          VARCHAR(20) NOT NULL DEFAULT 'active',  -- active | blocked
+  partner_code    VARCHAR(20) UNIQUE NOT NULL,
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | active | blocked
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+  approved_by     INTEGER REFERENCES admins(id),
+  approved_at     TIMESTAMP,
+  rating          INTEGER NOT NULL DEFAULT 100,  -- 0–100, автоматически
   referral_token  VARCHAR(64) UNIQUE NOT NULL,
-  referrer_id     INTEGER REFERENCES partners(id),  -- кто пригласил этот партнёр (партнёрская рефералка)
+  referrer_id     INTEGER REFERENCES partners(id),
+  region          VARCHAR(100),  -- регион (Берск, Иркутск и т.д.)
+  residential_complex VARCHAR(255),  -- ЖК (если привязан)
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -146,7 +152,42 @@ CREATE UNIQUE INDEX idx_partners_token ON partners(referral_token);
 CREATE UNIQUE INDEX idx_partners_code ON partners(partner_code);
 ```
 
-### visits (Посещения / Атрибуция)
+**Правила отображения на лендинге:**
+- Партнёр отображается на лендинге ТОЛЬКО если `approval_status = 'approved'` И `rating >= 50`
+- Рейтинг рассчитывается автоматически: +2 за каждую обработанную заявку, -5 за каждый пропущенный ответ, -10 за жалобу клиента
+- Если `rating < 50` — партнёр автоматически скрывается с лендингов
+- Рейтинг пересчитывается раз в сутки (cron-job)
+
+### admins (Администраторы)
+
+```sql
+CREATE TABLE admins (
+  id              SERIAL PRIMARY KEY,
+  name            VARCHAR(255) NOT NULL,
+  email           VARCHAR(255) UNIQUE NOT NULL,
+  role            VARCHAR(20) NOT NULL DEFAULT 'admin',  -- superadmin | admin
+  region          VARCHAR(100),  -- регион ответственности (NULL = все регионы)
+  residential_complex VARCHAR(255),  -- ЖК ответственности (NULL = все ЖК)
+  password_hash   VARCHAR(255),  -- NULL у корневого суперадмина до первого входа
+  is_test         BOOLEAN NOT NULL DEFAULT false,  -- тестовый суперадмин
+  created_at      TIMESTAMP DEFAULT NOW(),
+  updated_at      TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Роли:**
+- **superadmin** — может добавлять админов, управлять всеми регионами, одобрять партнёров
+- **admin** — управляет партнёрами и заявками в своём регионе/ЖК
+
+**Корневой суперадмин:**
+- Создаётся при первом запуске (seed) с `password_hash = NULL`
+- Обязан задать пароль при первом входе
+- Email: задаётся через переменную окружения `ROOT_ADMIN_EMAIL`
+
+**Тестовый суперадмин:**
+- Создаётся только в режиме `NODE_ENV=test`
+- `is_test = true`
+- Используется для автоматических тестов
 
 ```sql
 CREATE TABLE visits (

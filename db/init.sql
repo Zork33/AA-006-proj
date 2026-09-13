@@ -9,15 +9,35 @@ CREATE TABLE services (
   updated_at      TIMESTAMP DEFAULT NOW()
 );
 
--- Partners
+-- Admins (Администраторы)
+CREATE TABLE admins (
+  id              SERIAL PRIMARY KEY,
+  name            VARCHAR(255) NOT NULL,
+  email           VARCHAR(255) UNIQUE NOT NULL,
+  role            VARCHAR(20) NOT NULL DEFAULT 'admin',  -- superadmin | admin
+  region          VARCHAR(100),  -- регион ответственности (NULL = все регионы)
+  residential_complex VARCHAR(255),  -- ЖК ответственности (NULL = все ЖК)
+  password_hash   VARCHAR(255),  -- NULL у корневого суперадмина до первого входа
+  is_test         BOOLEAN NOT NULL DEFAULT false,  -- тестовый суперадмин
+  created_at      TIMESTAMP DEFAULT NOW(),
+  updated_at      TIMESTAMP DEFAULT NOW()
+);
+
+-- Partners (Партнёры)
 CREATE TABLE partners (
   id              SERIAL PRIMARY KEY,
   name            VARCHAR(255) NOT NULL,
   email           VARCHAR(255) UNIQUE NOT NULL,
   partner_code    VARCHAR(20) UNIQUE NOT NULL,
-  status          VARCHAR(20) NOT NULL DEFAULT 'active',  -- active | blocked
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | active | blocked
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+  approved_by     INTEGER REFERENCES admins(id),
+  approved_at     TIMESTAMP,
+  rating          INTEGER NOT NULL DEFAULT 100,  -- 0–100, автоматически
   referral_token  VARCHAR(64) UNIQUE NOT NULL,
   referrer_id     INTEGER REFERENCES partners(id),
+  region          VARCHAR(100),  -- регион (Берск, Иркутск и т.д.)
+  residential_complex VARCHAR(255),  -- ЖК (если привязан)
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -61,6 +81,8 @@ CREATE TABLE visits (
 
 CREATE INDEX idx_visits_session ON visits(session_id);
 
+-- === SEED DATA ===
+
 -- Seed: дефолтный список услуг
 INSERT INTO services (name, description) VALUES
   ('Недвижимость', 'Помощь с покупкой, продажей или арендой недвижимости'),
@@ -71,6 +93,14 @@ INSERT INTO services (name, description) VALUES
   ('Электрика', 'Электромонтажные работы, проводка, розетки'),
   ('Клиники', 'Услуги медицинских клиник');
 
--- Seed: первый партнёр — наш собственный бизнес
-INSERT INTO partners (name, email, partner_code, referral_token, status)
-VALUES ('НашБизнес', 'info@nashbiz.ru', 'NASH', 'nash-ref-token-seed', 'active');
+-- Seed: корневой суперадмин (пароль задаётся при первом входе)
+INSERT INTO admins (name, email, role, password_hash)
+VALUES ('Суперадмин', 'admin@example.com', 'superadmin', NULL);
+
+-- Seed: тестовый суперадмин (только в test-режиме)
+-- INSERT INTO admins (name, email, role, password_hash, is_test)
+-- VALUES ('ТестовыйАдмин', 'test@example.com', 'superadmin', 'test-hash', true);
+
+-- Seed: первый партнёр — наш собственный бизнес (одобрен сразу)
+INSERT INTO partners (name, email, partner_code, referral_token, status, approval_status, rating, region)
+VALUES ('НашБизнес', 'info@nashbiz.ru', 'NASH', 'nash-ref-token-seed', 'active', 'approved', 100, 'Берск');
