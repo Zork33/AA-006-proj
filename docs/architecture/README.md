@@ -8,6 +8,8 @@
 
 На старте — один лендинг. Архитектура предусматривает возможность масштабирования на несколько лендингов по регионам/ЖК (Берск, Иркутск и т.д.). Каждый партнёр может выбирать, на каких лендингах быть. Реферальная ссылка: `site.com/?ref=TOKEN` (зоны `.ru` и `.com`).
 
+Партнёры могут приглашать других партнёров через промо-коды (партнёрская рефералка). Система отслеживает цепочку: кто кого позвал (`partners.referrer_id`).
+
 ## Стек технологий
 
 | Компонент | Технология | Провайдер |
@@ -131,6 +133,7 @@ CREATE TABLE partners (
   partner_code    VARCHAR(20) UNIQUE NOT NULL,  -- код партнёра для номеров заявок (IVAN, ABC123)
   status          VARCHAR(20) NOT NULL DEFAULT 'active',  -- active | blocked
   referral_token  VARCHAR(64) UNIQUE NOT NULL,
+  referrer_id     INTEGER REFERENCES partners(id),  -- кто пригласил этот партнёр (партнёрская рефералка)
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -177,6 +180,7 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 | POST | `/api/admin/services` | Создание услуги |
 | PATCH | `/api/admin/services/:id` | Редактирование услуги |
 | POST | `/api/admin/partners` | Создание партнёра |
+| POST | `/api/partners/register` | Регистрация нового партнёра с промо-кодом пригласившего |
 | PATCH | `/api/admin/partners/:id` | Блокировка/разблокировка |
 | GET | `/api/admin/partners` | Список партнёров |
 | GET | `/api/admin/export` | Экспорт в CSV |
