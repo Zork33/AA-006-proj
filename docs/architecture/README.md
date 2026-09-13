@@ -88,7 +88,7 @@ CREATE TABLE leads (
   partner_id      INTEGER REFERENCES partners(id),
   source          VARCHAR(20) NOT NULL DEFAULT 'QR',  -- QR | partner
   attribution     VARCHAR(20) NOT NULL DEFAULT 'first_touch',
-  status          VARCHAR(20) NOT NULL DEFAULT 'NEW',  -- NEW | CONTACTED | QUALIFIED | CONVERTED | REJECTED | DUPLICATE | CANCELLED
+  status          VARCHAR(20) NOT NULL DEFAULT 'NEW',  -- NEW | CONTACTED | QUALIFIED | CONVERTED | COMPLETED | REJECTED | DUPLICATE | CANCELLED
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
 );
@@ -98,6 +98,25 @@ CREATE INDEX idx_leads_partner ON leads(partner_id);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_number ON leads(lead_number);
 ```
+
+### lead_feedback (Отзывы клиентов)
+
+```sql
+CREATE TABLE lead_feedback (
+  id              SERIAL PRIMARY KEY,
+  lead_id         INTEGER REFERENCES leads(id) UNIQUE NOT NULL,
+  rating          INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),  -- 1–5 звёзд
+  comment         TEXT,  -- опциональный комментарий
+  created_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_feedback_lead ON lead_feedback(lead_id);
+```
+
+**Правила:**
+- Клиент может оставить отзыв только один раз для каждой заявки
+- Отзыв привязан к статусу `CONVERTED` или `COMPLETED`
+- Рейтинг клиента влияет на рейтинг партнёра (+2 при 4–5 звёзд, -3 при 1–2 звёзды)
 
 ### Правила дедупликации
 
@@ -213,6 +232,7 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 |---|---|---|
 | GET | `/api/services` | Список активных услуг |
 | POST | `/api/leads` | Создание заявки |
+| POST | `/api/leads/:id/feedback` | Отзыв клиента (rating 1–5, comment) |
 
 ### Админ
 
