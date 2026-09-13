@@ -8,7 +8,7 @@
 
 ## Стек
 
-- Vue 3 (Composition API, `<script setup>`)
+- Svelte (SvelteKit или Vite + Svelte)
 - Tailwind CSS
 - Mobile-first (QR сканируют с телефона)
 

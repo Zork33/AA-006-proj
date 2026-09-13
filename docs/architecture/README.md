@@ -14,10 +14,12 @@
 
 | Компонент | Технология | Провайдер |
 |---|---|---|
-| Frontend | Vue 3 + Tailwind CSS | Vercel / Netlify / статический хостинг |
+| Frontend | Svelte + Tailwind CSS | Selectel / Nginx (статика) |
 | Backend API | Node.js (TypeScript, Fastify) | Selectel VPS |
 | База данных | PostgreSQL 15+ | Selectel Managed PostgreSQL |
 | Уведомления | MAX Bot API | dev.max.ru |
+| HTTP-клиент | Native `fetch` | — |
+| Очередь (будущее) | BullMQ + Redis | — |
 | QR-коды | Статичные, генерация на клиенте или сервере | — |
 
 ## Схема архитектуры
@@ -30,7 +32,7 @@
                        │
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│              Frontend (Vue 3 + Tailwind)             │
+│              Frontend (Svelte + Tailwind)            │
 │  - Лендинг ( Hero → Услуги → Форма → CTA )          │
 │  - Админ-панель ( /admin )                          │
 │  - Сохранение ref-токена в cookie                   │
