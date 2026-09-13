@@ -6,6 +6,8 @@
 
 Сайт-визитка для сбора заявок с QR-кодов и партнёрских каналов. Лендинг, форма заявки, реферальная система, админ-панель, уведомления через MAX.
 
+На старте — один лендинг. Архитектура предусматривает возможность масштабирования на несколько лендингов по регионам/ЖК (Берск, Иркутск и т.д.). Каждый партнёр может выбирать, на каких лендингах быть. Реферальная ссылка: `site.com/?ref=TOKEN` (зоны `.ru` и `.com`).
+
 ## Стек технологий
 
 | Компонент | Технология | Провайдер |
@@ -73,6 +75,9 @@ CREATE TABLE leads (
   lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер заявки (LEAD-0001 или PARTNER-0001)
   name            VARCHAR(255) NOT NULL,
   phone           VARCHAR(20) NOT NULL,
+  email           VARCHAR(255) NOT NULL,
+  city            VARCHAR(255) NOT NULL,
+  messenger       VARCHAR(50),  -- WhatsApp, Telegram и т.д. (опционально)
   service_id      INTEGER REFERENCES services(id),
   partner_id      INTEGER REFERENCES partners(id),
   source          VARCHAR(20) NOT NULL DEFAULT 'QR',  -- QR | partner
@@ -101,6 +106,8 @@ CREATE INDEX idx_leads_number ON leads(lead_number);
 - Если заявка от QR: `QR-{порядковый номер}` (например: `QR-0001`)
 
 ### services (Услуги)
+
+На старте — фиксированный список: недвижимость, сантехника, кондиционирование, окна, двери, электрика, услуги клиник.
 
 ```sql
 CREATE TABLE services (
