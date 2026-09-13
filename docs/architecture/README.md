@@ -236,11 +236,22 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 |---|---|---|
 | GET | `/api/health` | Health check |
 
+### Авторизация
+
+| Метод | Путь | Описание |
+|---|---|---|
+| POST | `/api/auth/login` | Вход (email + пароль → JWT) |
+| POST | `/api/auth/register` | Регистрация (для партнёров) |
+| POST | `/api/auth/refresh` | Обновление access token |
+| POST | `/api/auth/reset` | Сброс пароля (письмо со ссылкой) |
+| GET | `/api/auth/oauth/:provider` | OAuth redirect (Google, Яндекс, VK) |
+| GET | `/api/auth/oauth/:provider/callback` | OAuth callback |
+
 ### Партнёр (личный кабинет)
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/partner/login` | Вход по email + magic link / пароль |
+| GET | `/api/partner/dashboard` | Дашборд: заявки, конверсия, статистика |
 | GET | `/api/partner/dashboard` | Дашборд: заявки, конверсия, статистика |
 | GET | `/api/partner/referral` | Реферальная ссылка и промо-код |
 | GET | `/api/partner/invites` | Список приглашённых партнёров |
@@ -278,8 +289,24 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 - CAPTCHA или honeypot-поле против спама
 - CSRF-токены для форм
 - SQL-параметризация (защита от SQL-инъекций)
-- JWT для админ-панели
 - Персональные данные: шифрование при хранении, доступ только у админа
+
+## Авторизация
+
+**MVP (email + пароль):**
+- Эндпоинт: `POST /api/auth/login` → JWT (access + refresh)
+- Access token: 15 минут, refresh: 30 дней
+- Хранение пароля: bcrypt (cost factor 12)
+- Сброс пароля: `POST /api/auth/reset` → письмо со ссылкой
+- Для партнёров: вход по email + пароль
+- Для админов: вход по email + пароль
+
+**После MVP (OAuth):**
+- Google, Яндекс, VK, Одноклассники
+- Эндпоинт: `GET /api/auth/oauth/:provider` → redirect
+- Callback: `GET /api/auth/oauth/:provider/callback`
+- Привязка аккаунта: `POST /api/auth/oauth/link`
+- Таблица `oauth_accounts`: provider, provider_user_id, user_id
 
 ## Тестирование
 
