@@ -5,6 +5,7 @@ import { leads, services, partners } from '../../db/schema.js';
 import { eq, and, gte, sql } from 'drizzle-orm';
 import { notifyNewLead, notifyLeadStatusChange } from '../../lib/notify.js';
 import { rateLimitMiddleware, honeypotCheck } from '../../lib/security.js';
+import { requireAuth } from '../../lib/middleware.js';
 
 const createLeadSchema = z.object({
   name: z.string().min(1),
@@ -91,13 +92,13 @@ export async function leadsRoutes(app: FastifyInstance) {
   });
 
   // Список заявок (админ)
-  app.get('/api/leads', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/leads', { preHandler: requireAuth }, async (request: FastifyRequest, reply: FastifyReply) => {
     const allLeads = await db.select().from(leads).orderBy(sql`${leads.createdAt} DESC`);
     return reply.status(200).send(allLeads);
   });
 
   // Смена статуса заявки (админ)
-  app.patch('/api/leads/:id/status', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/api/leads/:id/status', { preHandler: requireAuth }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = request.params as { id: string };
     const { status } = request.body as { status: string };
 

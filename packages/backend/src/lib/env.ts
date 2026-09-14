@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const envSchema = z.object({
   DATABASE_URL: z.string().default('postgresql://leads_user:leads_password@localhost:5432/leads_db'),
-  JWT_SECRET: z.string().min(16).default('change-me-in-production-at-least-16-chars'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   CORS_ORIGIN: z.string().default('*'),

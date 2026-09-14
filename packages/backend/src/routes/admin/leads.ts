@@ -4,6 +4,17 @@ import { leads } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../../lib/middleware.js';
 
+function escapeCsv(value: string | number | null | undefined): string {
+  const str = String(value ?? '');
+  if (str.match(/^[=+\-@\t\r]/)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 export async function adminLeadsRoutes(app: FastifyInstance) {
   // Список всех заявок
   app.get('/api/admin/leads', { preHandler: requireAuth }, async (request, reply) => {
@@ -52,7 +63,7 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     const csv = [
       'lead_number,name,phone,email,city,service_id,partner_id,source,status,created_at',
       ...allLeads.map((l) =>
-        `${l.leadNumber},${l.name},${l.phone},${l.email},${l.city},${l.serviceId || ''},${l.partnerId || ''},${l.source},${l.status},${l.createdAt}`
+        [l.leadNumber, l.name, l.phone, l.email, l.city, l.serviceId || '', l.partnerId || '', l.source, l.status, l.createdAt].map(escapeCsv).join(',')
       ),
     ].join('\n');
 

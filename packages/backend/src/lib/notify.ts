@@ -4,6 +4,15 @@ import { leads, services, partners } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { getEnv } from './env.js';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface LeadNotification {
   leadNumber: string;
   name: string;
@@ -35,15 +44,15 @@ function formatLeadEmail(data: LeadNotification): string {
   return `
     <h2>📋 Новая заявка</h2>
     <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Номер</td><td style="padding: 8px; border: 1px solid #ddd;">${data.leadNumber}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Имя</td><td style="padding: 8px; border: 1px solid #ddd;">${data.name}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Телефон</td><td style="padding: 8px; border: 1px solid #ddd;">${data.phone}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Email</td><td style="padding: 8px; border: 1px solid #ddd;">${data.email}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Город</td><td style="padding: 8px; border: 1px solid #ddd;">${data.city}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Услуга</td><td style="padding: 8px; border: 1px solid #ddd;">${data.serviceName || '—'}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Партнёр</td><td style="padding: 8px; border: 1px solid #ddd;">${data.partnerName || '—'}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Источник</td><td style="padding: 8px; border: 1px solid #ddd;">${data.source}</td></tr>
-      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Дата</td><td style="padding: 8px; border: 1px solid #ddd;">${new Date().toLocaleString('ru-RU')}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Номер</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.leadNumber)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Имя</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.name)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Телефон</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.phone)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Email</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.email)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Город</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.city)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Услуга</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.serviceName || '—')}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Партнёр</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.partnerName || '—')}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Источник</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(data.source)}</td></tr>
+      <tr><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Дата</td><td style="padding: 8px; border: 1px solid #ddd;">${escapeHtml(new Date().toLocaleString('ru-RU'))}</td></tr>
     </table>
   `;
 }
@@ -109,7 +118,7 @@ export async function notifyLeadStatusChange(leadId: number, oldStatus: string, 
     from: env.SMTP_USER,
     to: managerEmail,
     subject: `Заявка ${lead.leadNumber}: ${oldStatus} → ${newStatus}`,
-    html: `<p>Заявка <b>${lead.leadNumber}</b>: статус изменён с <b>${oldStatus}</b> на <b>${newStatus}</b></p>`,
+    html: `<p>Заявка <b>${escapeHtml(lead.leadNumber)}</b>: статус изменён с <b>${escapeHtml(oldStatus)}</b> на <b>${escapeHtml(newStatus)}</b></p>`,
   });
 
   return { sent: true, to: managerEmail };

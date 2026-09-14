@@ -31,7 +31,7 @@
         return;
       }
 
-      setTokens(data.accessToken, data.refreshToken, data.role);
+      setTokens(data.accessToken, data.refreshToken, data.admin?.role);
       goto('/partner');
     } catch {
       error = 'Ошибка сети';
