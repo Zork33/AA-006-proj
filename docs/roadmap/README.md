@@ -31,11 +31,11 @@
 
 > Делается ПЕРЕД продолжением разработки. Цель — довести каркас до рабочего состояния.
 
-### Шаг 1: Реферальная система — починить поток (0.5 дня)
+### Шаг 1: Реферальная система — починить поток (0.5 дня) ✅
 
-- [ ] Бэкенд: `POST /api/leads` — читать `ref` из `request.cookies.ref`, а не из body (`leads/index.ts:50-59`)
-- [ ] Фронтенд: `LeadForm.svelte` — при отправке формы читать cookie `ref` и отправлять в теле запроса
-- [ ] Фронтенд: при переходе по `?ref=TOKEN` вызывать `GET /api/referral/track` для записи в `visits`
+- [x] Бэкенд: `POST /api/leads` — читать `ref` из `request.cookies.ref`, а не из body (`leads/index.ts:50-59`)
+- [x] Фронтенд: `LeadForm.svelte` — `credentials: 'same-origin'`, cookie отправляется автоматически
+- [x] Фронтенд: при переходе по `?ref=TOKEN` вызывать `GET /api/referral/track` для записи в `visits`
 
 ### Шаг 2: Дедупликация — добавить `partner_id` (0.5 дня)
 
