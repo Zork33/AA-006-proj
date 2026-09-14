@@ -22,7 +22,8 @@ export async function partnerRoutes(app: FastifyInstance) {
     const converted = allLeads.filter(l => l.status === 'CONVERTED').length;
     const newLeads = allLeads.filter(l => l.status === 'NEW').length;
     const today = allLeads.filter(l => {
-      const d = new Date(l.createdAt!);
+      if (!l.createdAt) return false;
+      const d = new Date(l.createdAt);
       const now = new Date();
       return d.toDateString() === now.toDateString();
     }).length;

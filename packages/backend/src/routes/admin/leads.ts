@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { db } from '../../db/index.js';
 import { leads } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -14,6 +15,10 @@ function escapeCsv(value: string | number | null | undefined): string {
   }
   return str;
 }
+
+const statusSchema = z.object({
+  status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'COMPLETED', 'REJECTED', 'DUPLICATE', 'CANCELLED']),
+});
 
 export async function adminLeadsRoutes(app: FastifyInstance) {
   // Список всех заявок
@@ -45,12 +50,12 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
   // Смена статуса заявки
   app.patch('/api/admin/leads/:id/status', { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { status } = request.body as { status: string };
-
-    const validStatuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'COMPLETED', 'REJECTED', 'DUPLICATE', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return reply.status(400).send({ error: 'Неверный статус' });
+    const parsed = statusSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Неверный статус', details: parsed.error.flatten() });
     }
+
+    const { status } = parsed.data;
 
     await db.update(leads).set({ status: status as any, updatedAt: new Date() }).where(eq(leads.id, Number(id)));
     return reply.status(200).send({ status });

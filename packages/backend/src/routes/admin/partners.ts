@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { db } from '../../db/index.js';
 import { partners } from '../../db/schema.js';
@@ -14,6 +15,14 @@ const createPartnerSchema = z.object({
 
 const approveSchema = z.object({
   status: z.enum(['approved', 'rejected']),
+});
+
+const ratingSchema = z.object({
+  delta: z.number().int().min(-100).max(100),
+});
+
+const blockSchema = z.object({
+  status: z.enum(['active', 'blocked']),
 });
 
 export async function adminPartnersRoutes(app: FastifyInstance) {
@@ -71,7 +80,12 @@ export async function adminPartnersRoutes(app: FastifyInstance) {
   // Обновление рейтинга партнёра (вызывается при событиях)
   app.patch('/api/admin/partners/:id/rating', { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { delta } = request.body as { delta: number };
+    const parsed = ratingSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
+    }
+
+    const { delta } = parsed.data;
 
     // Безопасное обновление рейтинга в пределах 0–100
     await db.execute(sql`
@@ -88,11 +102,12 @@ export async function adminPartnersRoutes(app: FastifyInstance) {
   // Блокировка/разблокировка партнёра
   app.patch('/api/admin/partners/:id', { preHandler: requireSuperadmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { status } = request.body as { status: string };
-
-    if (!['active', 'blocked'].includes(status)) {
-      return reply.status(400).send({ error: 'Неверный статус' });
+    const parsed = blockSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
     }
+
+    const { status } = parsed.data;
 
     await db.update(partners).set({
       status: status as any,

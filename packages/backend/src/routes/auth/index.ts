@@ -46,7 +46,7 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.status(200).send(result);
   });
 
-  app.post('/api/auth/register', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/api/auth/register', { preHandler: rateLimitMiddleware }, async (request: FastifyRequest, reply: FastifyReply) => {
     const parsed = registerSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });

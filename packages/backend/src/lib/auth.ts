@@ -52,7 +52,13 @@ export async function register(name: string, email: string, password: string) {
 }
 
 export async function refresh(refreshTokenStr: string) {
-  const payload = verifyToken(refreshTokenStr);
+  let payload: JwtPayload;
+  try {
+    payload = verifyToken(refreshTokenStr);
+  } catch {
+    return null;
+  }
+
   const [admin] = await db.select().from(admins).where(eq(admins.id, payload.id));
   if (!admin) return null;
 
