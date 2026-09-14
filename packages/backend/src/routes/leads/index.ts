@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { db } from '../../db/index.js';
 import { leads, services, partners } from '../../db/schema.js';
 import { eq, and, gte, sql } from 'drizzle-orm';
+import { notifyNewLead, notifyLeadStatusChange } from '../../lib/notify.js';
+import { rateLimitMiddleware, honeypotCheck } from '../../lib/security.js';
 
 const createLeadSchema = z.object({
   name: z.string().min(1),
@@ -12,6 +14,7 @@ const createLeadSchema = z.object({
   serviceId: z.number().optional(),
   messenger: z.string().optional(),
   ref: z.string().optional(),
+  website: z.string().optional(), // honeypot
 });
 
 function generateLeadNumber(prefix: string, id: number): string {
@@ -19,8 +22,8 @@ function generateLeadNumber(prefix: string, id: number): string {
 }
 
 export async function leadsRoutes(app: FastifyInstance) {
-  // Создание заявки (публичное)
-  app.post('/api/leads', async (request: FastifyRequest, reply: FastifyReply) => {
+  // Создание заявки (публичное) — rate limit + honeypot
+  app.post('/api/leads', { preHandler: [rateLimitMiddleware, honeypotCheck] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const parsed = createLeadSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
@@ -67,6 +70,13 @@ export async function leadsRoutes(app: FastifyInstance) {
       : generateLeadNumber('PARTNER', lead.id);
     await db.update(leads).set({ leadNumber }).where(eq(leads.id, lead.id));
 
+    // Отправка email-уведомления
+    try {
+      await notifyNewLead(lead.id);
+    } catch (err) {
+      console.error('Ошибка отправки уведомления:', err);
+    }
+
     return reply.status(201).send({ leadNumber, id: lead.id });
   });
 
@@ -86,7 +96,18 @@ export async function leadsRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Неверный статус' });
     }
 
+    const [oldLead] = await db.select().from(leads).where(eq(leads.id, Number(id)));
     await db.update(leads).set({ status: status as any, updatedAt: new Date() }).where(eq(leads.id, Number(id)));
+
+    // Уведомление о смене статуса
+    if (oldLead) {
+      try {
+        await notifyLeadStatusChange(oldLead.id, oldLead.status, status);
+      } catch (err) {
+        console.error('Ошибка отправки уведомления:', err);
+      }
+    }
+
     return reply.status(200).send({ status });
   });
 }
