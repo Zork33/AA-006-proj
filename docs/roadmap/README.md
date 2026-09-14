@@ -161,6 +161,7 @@
 
 - Unit-тесты: все сервисы и контроллеры
 - Интеграционные тесты: реальная PostgreSQL через Docker
+- **BDD-тесты:** Cucumber + Vitest (`.feature` файлы + step definitions)
 - E2E-тесты: Playwright (лендинг + форма + админ)
 - Покрытие ≥ 96%
 
