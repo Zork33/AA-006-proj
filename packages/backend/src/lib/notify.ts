@@ -1,7 +1,8 @@
-import { FastifyInstance } from 'fastify';
+import nodemailer from 'nodemailer';
 import { db } from '../db/index.js';
 import { leads, services, partners } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { getEnv } from './env.js';
 
 interface LeadNotification {
   leadNumber: string;
@@ -12,6 +13,22 @@ interface LeadNotification {
   serviceName?: string;
   partnerName?: string;
   source: string;
+}
+
+function getTransporter() {
+  const env = getEnv();
+  if (!env.SMTP_HOST || !env.SMTP_PORT || !env.SMTP_USER || !env.SMTP_PASS) {
+    return null;
+  }
+  return nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465,
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+  });
 }
 
 function formatLeadEmail(data: LeadNotification): string {
@@ -55,12 +72,22 @@ export async function notifyNewLead(leadId: number) {
   };
 
   const html = formatLeadEmail(notification);
-  const managerEmail = process.env.MANAGER_EMAIL || 'manager@vsyak.zork.ru';
+  const env = getEnv();
+  const managerEmail = env.MANAGER_EMAIL;
 
-  // В реальном проекте здесь будет nodemailer
-  console.log(`[EMAIL] Отправка уведомления на ${managerEmail}:`);
-  console.log(`[EMAIL] Тема: Новая заявка ${lead.leadNumber}`);
-  console.log(`[EMAIL] Тело: ${JSON.stringify(notification)}`);
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.log(`[EMAIL] SMTP не настроен. Уведомление для ${lead.leadNumber}:`);
+    console.log(`[EMAIL] → ${managerEmail}`);
+    return { sent: false, to: managerEmail, reason: 'SMTP not configured' };
+  }
+
+  await transporter.sendMail({
+    from: env.SMTP_USER,
+    to: managerEmail,
+    subject: `Новая заявка ${lead.leadNumber}`,
+    html,
+  });
 
   return { sent: true, to: managerEmail };
 }
@@ -69,10 +96,21 @@ export async function notifyLeadStatusChange(leadId: number, oldStatus: string, 
   const [lead] = await db.select().from(leads).where(eq(leads.id, leadId));
   if (!lead) return;
 
-  const managerEmail = process.env.MANAGER_EMAIL || 'manager@vsyak.zork.ru';
+  const env = getEnv();
+  const managerEmail = env.MANAGER_EMAIL;
 
-  console.log(`[EMAIL] Смена статуса заявки ${lead.leadNumber}: ${oldStatus} → ${newStatus}`);
-  console.log(`[EMAIL] Отправка на ${managerEmail}`);
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.log(`[EMAIL] SMTP не настроен. Смена статуса ${lead.leadNumber}: ${oldStatus} → ${newStatus}`);
+    return { sent: false, to: managerEmail, reason: 'SMTP not configured' };
+  }
+
+  await transporter.sendMail({
+    from: env.SMTP_USER,
+    to: managerEmail,
+    subject: `Заявка ${lead.leadNumber}: ${oldStatus} → ${newStatus}`,
+    html: `<p>Заявка <b>${lead.leadNumber}</b>: статус изменён с <b>${oldStatus}</b> на <b>${newStatus}</b></p>`,
+  });
 
   return { sent: true, to: managerEmail };
 }

@@ -48,12 +48,12 @@
 - [x] Бэкенд: `POST /api/leads` — валидация поля `consent: true` (zod literal)
 - [x] Бэкенд: возвращает 400 если consent не передан
 
-### Шаг 4: Email-уведомления — SMTP вместо console.log (0.5 дня)
+### Шаг 4: Email-уведомления — SMTP вместо console.log (0.5 дня) ✅
 
-- [ ] Установить `nodemailer`
-- [ ] `lib/notify.ts` — реальная отправка через SMTP (из `.env`: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)
-- [ ] Бэкенд: env-схема — добавить валидацию SMTP-переменных
-- [ ] `.env.example` — добавить `CORS_ORIGIN`, `ROOT_ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`
+- [x] Установить `nodemailer` + `@types/nodemailer`
+- [x] `lib/notify.ts` — реальная отправка через SMTP, fallback на console.log если SMTP не настроен
+- [x] Бэкенд: env-схема — добавлены SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MANAGER_EMAIL, CORS_ORIGIN, ROOT_ADMIN_EMAIL
+- [x] `.env.example` — добавлены CORS_ORIGIN, ROOT_ADMIN_EMAIL
 
 ### Шаг 5: Seed — `ROOT_ADMIN_EMAIL` из env (0.5 дня)
 
