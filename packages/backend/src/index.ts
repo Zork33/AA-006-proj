@@ -8,6 +8,8 @@ import { referralRoutes } from './routes/referral/index.js';
 import { adminPartnersRoutes } from './routes/admin/partners.js';
 import { adminLeadsRoutes } from './routes/admin/leads.js';
 import { partnerRoutes } from './routes/partner/index.js';
+import { partnerRegisterRoutes } from './routes/partner/register.js';
+import { feedbackRoutes } from './routes/feedback/index.js';
 
 const app = Fastify({ logger: true });
 
@@ -26,6 +28,8 @@ await app.register(referralRoutes);
 await app.register(adminPartnersRoutes);
 await app.register(adminLeadsRoutes);
 await app.register(partnerRoutes);
+await app.register(partnerRegisterRoutes);
+await app.register(feedbackRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0';
