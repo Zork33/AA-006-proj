@@ -81,6 +81,98 @@
 
 Стиль: очень чистый, тёплый, спокойный, много кремового пространства.
 
+### Реализация layout-компонентов
+
+**Файловая структура:**
+
+```text
+src/
+├── lib/
+│   └── components/
+│       ├── layout/
+│       │   ├── PublicLayout.svelte    # обёртка для публичных страниц
+│       │   ├── AdminLayout.svelte     # обёртка для админки
+│       │   ├── Logo.svelte            # логотип «ВСЯК»
+│       │   ├── Footer.svelte          # футер (политика конфиденциальности)
+│       │   ├── Sidebar.svelte         # боковое меню админки
+│       │   └── TopBar.svelte          # верхняя панель админки
+│       └── ui/                        # базовые контролы (Button, Input и т.д.)
+├── routes/
+│   ├── +layout.svelte                 # корневой layout (общие стили)
+│   ├── +page.svelte                   # лендинг
+│   ├── thanks/+page.svelte
+│   ├── privacy/+page.svelte
+│   ├── auth/
+│   │   ├── login/+page.svelte
+│   │   ├── register/+page.svelte
+│   │   └── reset/+page.svelte
+│   ├── partner/
+│   │   ├── +layout.svelte             # PartnerLayout (дашборд + навигация)
+│   │   ├── +page.svelte               # дашборд партнёра
+│   │   ├── referral/+page.svelte
+│   │   └── invites/+page.svelte
+│   └── admin/
+│       ├── +layout.svelte             # AdminLayout (top bar + sidebar)
+│       ├── +page.svelte               # дашборд
+│       ├── services/+page.svelte
+│       ├── partners/+page.svelte
+│       └── partners/[id]/+page.svelte
+```
+
+**PublicLayout.svelte:**
+
+```svelte
+<script>
+  import Logo from './Logo.svelte';
+  import Footer from './Footer.svelte';
+</script>
+
+<div class="min-h-screen bg-[#F9F7F2] flex flex-col items-center px-5 py-8">
+  <Logo />
+  <main class="w-full max-w-[480px] flex-1">
+    <slot />
+  </main>
+  <Footer />
+</div>
+```
+
+**AdminLayout.svelte:**
+
+```svelte
+<script>
+  import TopBar from './TopBar.svelte';
+  import Sidebar from './Sidebar.svelte';
+</script>
+
+<div class="min-h-screen bg-[#F9F7F2]">
+  <TopBar />
+  <div class="flex">
+    <Sidebar />
+    <main class="flex-1 p-6 ml-0 md:ml-60">
+      <slot />
+    </main>
+  </div>
+</div>
+```
+
+**Использование в маршрутах:**
+
+```svelte
+<!-- routes/+layout.svelte (корневой) -->
+<slot />
+
+<!-- routes/thanks/+page.svelte -->
+<PublicLayout>
+  <h1>Спасибо!</h1>
+  <p>Ваша заявка принята.</p>
+</PublicLayout>
+
+<!-- routes/admin/+layout.svelte -->
+<AdminLayout>
+  <slot />
+</AdminLayout>
+```
+
 ### 2. Общий layout для админ-панели
 
 Используется на всех страницах /admin/*
