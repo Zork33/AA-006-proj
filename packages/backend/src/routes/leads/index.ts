@@ -13,6 +13,7 @@ const createLeadSchema = z.object({
   city: z.string().min(1),
   serviceId: z.number().optional(),
   messenger: z.string().optional(),
+  consent: z.literal(true, { errorMap: () => ({ message: 'Требуется согласие на обработку персональных данных' }) }),
   website: z.string().optional(), // honeypot
 });
 

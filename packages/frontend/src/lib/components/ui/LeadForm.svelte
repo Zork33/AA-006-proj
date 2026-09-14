@@ -7,6 +7,7 @@
   let city = $state('');
   let serviceId = $state<number | null>(null);
   let messenger = $state('');
+  let consent = $state(false);
   let website = $state(''); // honeypot
   let loading = $state(false);
   let error = $state('');
@@ -27,6 +28,7 @@
           name, phone, email, city,
           serviceId: serviceId || undefined,
           messenger: messenger || undefined,
+          consent,
           website,
         }),
       });
@@ -130,6 +132,19 @@
         placeholder="Telegram, WhatsApp"
       />
     </div>
+
+    <!-- Согласие 152-ФЗ -->
+    <label class="flex items-start gap-3 cursor-pointer">
+      <input
+        type="checkbox"
+        bind:checked={consent}
+        required
+        class="mt-1 h-4 w-4 rounded border-[#E5E5E5] text-[#6B9B7A] focus:ring-[#6B9B7A]"
+      />
+      <span class="text-sm text-[#666]">
+        Даю согласие на обработку персональных данных в соответствии с Федеральным законом №152-ФЗ
+      </span>
+    </label>
 
     <!-- Honeypot -->
     <div class="hidden" aria-hidden="true">
