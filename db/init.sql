@@ -105,12 +105,9 @@ INSERT INTO services (name, description) VALUES
   ('Клиники', 'Услуги медицинских клиник');
 
 -- Seed: корневой суперадмин (пароль задаётся при первом входе)
+-- Email должен совпадать с ROOT_ADMIN_EMAIL в .env
 INSERT INTO admins (name, email, role, password_hash)
 VALUES ('Суперадмин', 'admin@example.com', 'superadmin', NULL);
-
--- Seed: тестовый суперадмин (только в test-режиме)
--- INSERT INTO admins (name, email, role, password_hash, is_test)
--- VALUES ('ТестовыйАдмин', 'test@example.com', 'superadmin', 'test-hash', true);
 
 -- Seed: первый партнёр — наш собственный бизнес (одобрен сразу)
 INSERT INTO partners (name, email, partner_code, referral_token, status, approval_status, rating, region)
