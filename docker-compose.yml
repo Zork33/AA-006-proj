@@ -18,5 +18,27 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./packages/backend
+    container_name: leads-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://leads_user:leads_password@postgres:5432/leads_db
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      NODE_ENV: production
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MANAGER_EMAIL: ${MANAGER_EMAIL}
+      ROOT_ADMIN_EMAIL: ${ROOT_ADMIN_EMAIL}
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:

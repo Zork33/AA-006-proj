@@ -96,12 +96,13 @@
 - [x] Подключить в `index.ts`, настроить генерацию из аннотаций ✅
 - [x] Доступ: `/api/docs` в dev/staging ✅
 
-### Шаг 10: Инфраструктура (0.5 дня)
+### Шаг 10: Инфраструктура (0.5 дня) ✅
 
-- [ ] `docker-compose.yml` — добавить `depends_on` с `condition: service_healthy` для бэкенда
-- [ ] CORS — читать `CORS_ORIGIN` из env
-- [ ] PM2 — создать `ecosystem.config.js`
-- [ ] `.env.production` — создать шаблон
+- [x] `docker-compose.yml` — добавить `depends_on` с `condition: service_healthy` для бэкенда ✅
+- [x] CORS — читать `CORS_ORIGIN` из env ✅
+- [x] PM2 — создать `ecosystem.config.js` ✅
+- [x] `.env.production` — создать шаблон ✅
+- [x] `Dockerfile` для бэкенда ✅
 
 ### Шаг 11: Тесты — покрыть критичные сценарии (1 день)
 
