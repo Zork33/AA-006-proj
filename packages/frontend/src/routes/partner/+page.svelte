@@ -1,7 +1,18 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { authFetch } from '$lib/stores/auth';
+
   let dashboard = $state({
     partner: { name: '', rating: 0, approvalStatus: '' },
     stats: { total: 0, converted: 0, new_leads: 0, today: 0 },
+  });
+
+  onMount(async () => {
+    try {
+      const res = await authFetch('/api/partner/dashboard');
+      const data = await res.json();
+      dashboard = { ...dashboard, ...data };
+    } catch {}
   });
 </script>
 

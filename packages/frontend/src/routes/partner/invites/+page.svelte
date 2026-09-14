@@ -1,22 +1,19 @@
 <script lang="ts">
-  let invites = $state<Array<{
-    id: number;
-    name: string;
-    createdAt: string;
-    approvalStatus: string;
-  }>>([]);
+  import { onMount } from 'svelte';
+  import { authFetch } from '$lib/stores/auth';
 
-  const statusColors: Record<string, string> = {
-    approved: 'bg-green-100 text-green-700',
-    pending: 'bg-yellow-100 text-yellow-700',
-    rejected: 'bg-red-100 text-red-700',
-  };
+  let invites = $state<any[]>([]);
 
   const statusLabels: Record<string, string> = {
-    approved: 'Одобрен',
-    pending: 'На модерации',
-    rejected: 'Отклонён',
+    approved: 'Одобрен', pending: 'На модерации', rejected: 'Отклонён',
   };
+
+  onMount(async () => {
+    try {
+      const res = await authFetch('/api/partner/invites');
+      invites = await res.json();
+    } catch {}
+  });
 </script>
 
 <h2 class="text-xl font-semibold text-[#4A6B5D] mb-6">Приглашённые</h2>
@@ -44,7 +41,7 @@
               {new Date(invite.createdAt).toLocaleDateString('ru-RU')}
             </td>
             <td class="py-3 px-4">
-              <span class="px-2 py-1 rounded-full text-xs {statusColors[invite.approvalStatus] || 'bg-gray-100'}">
+              <span class="px-2 py-1 rounded-full text-xs {invite.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : invite.approvalStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">
                 {statusLabels[invite.approvalStatus] || invite.approvalStatus}
               </span>
             </td>

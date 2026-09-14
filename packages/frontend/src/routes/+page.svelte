@@ -1,16 +1,18 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import PublicLayout from '$lib/components/layout/PublicLayout.svelte';
   import LeadForm from '$lib/components/ui/LeadForm.svelte';
 
-  const services = [
-    { id: 1, name: 'Недвижимость', description: 'Покупка, продажа, аренда недвижимости' },
-    { id: 2, name: 'Сантехника', description: 'Ремонт и установка сантехники' },
-    { id: 3, name: 'Климат', description: 'Монтаж и обслуживание кондиционеров' },
-    { id: 4, name: 'Электрика', description: 'Электромонтажные работы' },
-    { id: 5, name: 'Ремонт', description: 'Капитальный и косметический ремонт' },
-    { id: 6, name: 'Уборка', description: 'Клининговые услуги' },
-    { id: 7, name: 'Доставка', description: 'Грузоперевозки и доставка' },
-  ];
+  let services = $state<Array<{id: number; name: string; description: string}>>([]);
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/services');
+      if (res.ok) {
+        services = await res.json();
+      }
+    } catch {}
+  });
 
   function handleLeadSubmit(data: any) {
     console.log('Lead submitted:', data);
@@ -18,7 +20,6 @@
 </script>
 
 <PublicLayout>
-  <!-- Hero -->
   <section class="text-center mb-8">
     <h2 class="text-2xl font-bold text-[#4A6B5D] mb-3">
       Нужен мастер?
@@ -28,7 +29,6 @@
     </p>
   </section>
 
-  <!-- Услуги -->
   <section class="mb-8">
     <h3 class="text-lg font-semibold text-[#4A6B5D] mb-4">Наши услуги</h3>
     <div class="grid grid-cols-2 gap-3">
@@ -41,7 +41,6 @@
     </div>
   </section>
 
-  <!-- Форма -->
   <section>
     <LeadForm {services} onsubmit={handleLeadSubmit} />
   </section>

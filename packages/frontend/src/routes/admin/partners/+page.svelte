@@ -1,12 +1,32 @@
 <script lang="ts">
-  let partners = $state<Array<{
-    id: number;
-    name: string;
-    email: string;
-    approvalStatus: string;
-    rating: number;
-    region: string;
-  }>>([]);
+  import { onMount } from 'svelte';
+  import { authFetch } from '$lib/stores/auth';
+
+  let partners = $state<any[]>([]);
+
+  onMount(async () => {
+    try {
+      const res = await authFetch('/api/admin/partners');
+      partners = await res.json();
+    } catch {}
+  });
+
+  async function approve(id: number, status: 'approved' | 'rejected') {
+    await authFetch(`/api/admin/partners/${id}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    partners = partners.map(p => p.id === id ? { ...p, approvalStatus: status } : p);
+  }
+
+  async function toggleBlock(id: number, currentStatus: string) {
+    const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+    await authFetch(`/api/admin/partners/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus }),
+    });
+    partners = partners.map(p => p.id === id ? { ...p, status: newStatus } : p);
+  }
 </script>
 
 <h2 class="text-xl font-semibold text-[#4A6B5D] mb-6">Партнёры</h2>
@@ -39,10 +59,15 @@
               {partner.rating}
             </span>
           </td>
-          <td class="py-3 px-4">
+          <td class="py-3 px-4 flex gap-2">
             {#if partner.approvalStatus === 'pending'}
-              <button class="text-sm text-[#6B9B7A] hover:underline mr-2">Одобрить</button>
-              <button class="text-sm text-red-500 hover:underline">Отклонить</button>
+              <button onclick={() => approve(partner.id, 'approved')} class="text-sm text-[#6B9B7A] hover:underline">Одобрить</button>
+              <button onclick={() => approve(partner.id, 'rejected')} class="text-sm text-red-500 hover:underline">Отклонить</button>
+            {/if}
+            {#if partner.approvalStatus === 'approved'}
+              <button onclick={() => toggleBlock(partner.id, partner.status)} class="text-sm text-[#999] hover:underline">
+                {partner.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}
+              </button>
             {/if}
           </td>
         </tr>

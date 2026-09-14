@@ -71,18 +71,18 @@
 | `GET /api/admin/leads/:id` | `routes/admin/leads.ts` | Детали заявки ✅ |
 | `POST /api/auth/reset` | `routes/auth/index.ts` | Сброс пароля (email со ссылкой) ✅ |
 
-### Шаг 7: Фронтенд — подключить API ко всем страницам (2 дня)
+### Шаг 7: Фронтенд — подключить API ко всем страницам (2 дня) ✅
 
 | Страница | Файл | Что сделать |
 |---|---|---|
-| Лендинг | `routes/+page.svelte` | Загружать услуги из `GET /api/services` вместо хардкода |
-| Админ-дашборд | `routes/admin/+page.svelte` | Загружать статистику из API |
-| Админ-заявки | `routes/admin/leads/+page.svelte` | Использовать `authFetch`, загружать заявки |
-| Админ-партнёры | `routes/admin/partners/+page.svelte` | Загружать из API, обработчики approve/reject |
-| Админ-услуги | `routes/admin/services/+page.svelte` | CRUD через API |
-| Партнёр дашборд | `routes/partner/+page.svelte` | Загружать из `GET /api/partner/dashboard` |
-| Партнёр реферал | `routes/partner/referral/+page.svelte` | Загружать из `GET /api/partner/referral` |
-| Партнёр приглашения | `routes/partner/invites/+page.svelte` | Загружать из `GET /api/partner/invites` |
+| Лендинг | `routes/+page.svelte` | Загружать услуги из `GET /api/services` ✅ |
+| Админ-дашборд | `routes/admin/+page.svelte` | Загружать статистику из API ✅ |
+| Админ-заявки | `routes/admin/leads/+page.svelte` | Использовать `authFetch`, загружать заявки ✅ |
+| Админ-партнёры | `routes/admin/partners/+page.svelte` | Загружать из API, обработчики approve/reject ✅ |
+| Админ-услуги | `routes/admin/services/+page.svelte` | CRUD через API ✅ |
+| Партнёр дашборд | `routes/partner/+page.svelte` | Загружать из `GET /api/partner/dashboard` ✅ |
+| Партнёр реферал | `routes/partner/referral/+page.svelte` | Загружать из `GET /api/partner/referral` ✅ |
+| Партнёр приглашения | `routes/partner/invites/+page.svelte` | Загружать из `GET /api/partner/invites` ✅ |
 
 ### Шаг 8: Guard — проверка ролей (0.5 дня)
 
