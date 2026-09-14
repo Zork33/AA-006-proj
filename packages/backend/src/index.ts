@@ -5,6 +5,8 @@ import { authRoutes } from './routes/auth/index.js';
 import { servicesRoutes } from './routes/services/index.js';
 import { leadsRoutes } from './routes/leads/index.js';
 import { referralRoutes } from './routes/referral/index.js';
+import { adminPartnersRoutes } from './routes/admin/partners.js';
+import { adminLeadsRoutes } from './routes/admin/leads.js';
 
 const app = Fastify({ logger: true });
 
@@ -20,6 +22,8 @@ await app.register(authRoutes);
 await app.register(servicesRoutes);
 await app.register(leadsRoutes);
 await app.register(referralRoutes);
+await app.register(adminPartnersRoutes);
+await app.register(adminLeadsRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0';
