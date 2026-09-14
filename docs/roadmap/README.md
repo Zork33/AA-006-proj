@@ -84,11 +84,11 @@
 | Партнёр реферал | `routes/partner/referral/+page.svelte` | Загружать из `GET /api/partner/referral` ✅ |
 | Партнёр приглашения | `routes/partner/invites/+page.svelte` | Загружать из `GET /api/partner/invites` ✅ |
 
-### Шаг 8: Guard — проверка ролей (0.5 дня)
+### Шаг 8: Guard — проверка ролей (0.5 дня) ✅
 
-- [ ] `admin/+layout.svelte` — проверять роль из JWT, редирект если нет прав
-- [ ] Суперадмин-страницы (`/admin/admins`) — доступны только `role === 'superadmin'`
-- [ ] Создать страницу `/admin/admins` (управление админами)
+- [x] `admin/+layout.svelte` — проверять роль из JWT, редирект если нет прав ✅
+- [x] Суперадмин-страницы (`/admin/admins`) — доступны только `role === 'superadmin'` ✅
+- [x] Создать страницу `/admin/admins` (управление админами) ✅
 
 ### Шаг 9:Swagger / OpenAPI (0.5 дня)
 

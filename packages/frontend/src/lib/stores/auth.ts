@@ -61,9 +61,22 @@ export function loadTokens() {
   if (access) {
     accessToken = access;
     refreshToken = refresh;
-    userRole = role;
+    userRole = role || decodeRole(access);
     notify();
   }
+}
+
+function decodeRole(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role || null;
+  } catch {
+    return null;
+  }
+}
+
+export function isSuperadmin() {
+  return userRole === 'superadmin';
 }
 
 export async function authFetch(url: string, options: RequestInit = {}) {

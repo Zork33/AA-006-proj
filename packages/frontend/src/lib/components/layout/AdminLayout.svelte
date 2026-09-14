@@ -27,6 +27,7 @@
         <a href="/admin/leads" class="block px-4 py-2 rounded-lg hover:bg-[#F5F5F5] text-[#4A6B5D]">Заявки</a>
         <a href="/admin/services" class="block px-4 py-2 rounded-lg hover:bg-[#F5F5F5] text-[#4A6B5D]">Услуги</a>
         <a href="/admin/partners" class="block px-4 py-2 rounded-lg hover:bg-[#F5F5F5] text-[#4A6B5D]">Партнёры</a>
+        <a href="/admin/admins" class="block px-4 py-2 rounded-lg hover:bg-[#F5F5F5] text-[#4A6B5D]">Админы</a>
       </nav>
     </aside>
 
