@@ -1,0 +1,92 @@
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
+import { db } from '../../db/index.js';
+import { leads, services, partners } from '../../db/schema.js';
+import { eq, and, gte, sql } from 'drizzle-orm';
+
+const createLeadSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(5),
+  email: z.string().email(),
+  city: z.string().min(1),
+  serviceId: z.number().optional(),
+  messenger: z.string().optional(),
+  ref: z.string().optional(),
+});
+
+function generateLeadNumber(prefix: string, id: number): string {
+  return `${prefix}-${String(id).padStart(4, '0')}`;
+}
+
+export async function leadsRoutes(app: FastifyInstance) {
+  // Создание заявки (публичное)
+  app.post('/api/leads', async (request: FastifyRequest, reply: FastifyReply) => {
+    const parsed = createLeadSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
+    }
+
+    const { name, phone, email, city, serviceId, messenger, ref } = parsed.data;
+
+    // Дедупликация: телефон + услуга за 24ч
+    if (serviceId) {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const [existing] = await db.select().from(leads)
+        .where(and(
+          eq(leads.phone, phone),
+          eq(leads.serviceId, serviceId),
+          gte(leads.createdAt, yesterday),
+        ))
+        .limit(1);
+
+      if (existing) {
+        return reply.status(409).send({ error: 'Заявка уже принята', leadNumber: existing.leadNumber });
+      }
+    }
+
+    // Определение партнёра по ref-токену
+    let partnerId: number | undefined;
+    let source = 'QR';
+    if (ref) {
+      const [partner] = await db.select().from(partners).where(eq(partners.referralToken, ref));
+      if (partner && partner.approvalStatus === 'approved') {
+        partnerId = partner.id;
+        source = 'partner';
+      }
+    }
+
+    // Вставка заявки с placeholder-номером
+    const [lead] = await db.insert(leads).values({
+      leadNumber: 'TEMP',
+      name, phone, email, city, serviceId, messenger, partnerId, source,
+    }).returning();
+
+    // Обновление номера заявки
+    const leadNumber = source === 'QR'
+      ? generateLeadNumber('QR', lead.id)
+      : generateLeadNumber('PARTNER', lead.id);
+    await db.update(leads).set({ leadNumber }).where(eq(leads.id, lead.id));
+
+    return reply.status(201).send({ leadNumber, id: lead.id });
+  });
+
+  // Список заявок (админ)
+  app.get('/api/leads', async (request: FastifyRequest, reply: FastifyReply) => {
+    const allLeads = await db.select().from(leads).orderBy(sql`${leads.createdAt} DESC`);
+    return reply.status(200).send(allLeads);
+  });
+
+  // Смена статуса заявки (админ)
+  app.patch('/api/leads/:id/status', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const { status } = request.body as { status: string };
+
+    const validStatuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'COMPLETED', 'REJECTED', 'DUPLICATE', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return reply.status(400).send({ error: 'Неверный статус' });
+    }
+
+    await db.update(leads).set({ status: status as any, updatedAt: new Date() }).where(eq(leads.id, Number(id)));
+    return reply.status(200).send({ status });
+  });
+}

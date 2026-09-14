@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth/index.js';
+import { servicesRoutes } from './routes/services/index.js';
+import { leadsRoutes } from './routes/leads/index.js';
 
 const app = Fastify({ logger: true });
 
@@ -12,6 +14,8 @@ app.get('/api/health', async () => ({
 }));
 
 await app.register(authRoutes);
+await app.register(servicesRoutes);
+await app.register(leadsRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0';
