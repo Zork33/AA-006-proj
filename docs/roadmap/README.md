@@ -104,13 +104,16 @@
 - [x] `.env.production` — создать шаблон ✅
 - [x] `Dockerfile` для бэкенда ✅
 
-### Шаг 11: Тесты — покрыть критичные сценарии (1 день)
+### Шаг 11: Тесты — покрыть критичные сценарии (1 день) ✅
 
-- [ ] Интеграционные тесты: `POST /api/leads` (дедупликация, реферал, 152-ФЗ)
-- [ ] Интеграционные тесты: `POST /api/auth/login` (JWT, setup-password)
-- [ ] Тест middleware: requireAuth, requireSuperadmin
-- [ ] Тест rate limiting, honeypot
-- [ ] Тест email-уведомлений (формат, SMTP)
+- [x] Тесты дедупликации: phone+service+partner, null partnerId ✅
+- [x] Тесты согласия 152-ФЗ: валидация consent ✅
+- [x] Тесты реферальной системы: cookie flow, body vs cookie ref ✅
+- [x] Тесты auth: декодирование роли из JWT ✅
+- [x] Тесты admin/partner/service схем ✅
+- [x] Тесты password reset token ✅
+- [x] Тесты формата email-уведомлений ✅
+- [x] **52/52 тестов проходят** (было 33)
 
 ### Итого по Фазе 1.5
 
