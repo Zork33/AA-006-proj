@@ -109,14 +109,16 @@ src/
 │   ├── partner/
 │   │   ├── +layout.svelte             # PartnerLayout (дашборд + навигация)
 │   │   ├── +page.svelte               # дашборд партнёра
-│   │   ├── referral/+page.svelte
-│   │   └── invites/+page.svelte
+│   │   ├── referral/+page.svelte      # реферальная ссылка
+│   │   └── invites/+page.svelte       # приглашённые
+│   ├── feedback/
+│   │   └── +page.svelte               # отзыв клиента (1–5★)
 │   └── admin/
 │       ├── +layout.svelte             # AdminLayout (top bar + sidebar)
 │       ├── +page.svelte               # дашборд
-│       ├── services/+page.svelte
-│       ├── partners/+page.svelte
-│       └── partners/[id]/+page.svelte
+│       ├── leads/+page.svelte         # заявки (таблица, статусы, экспорт)
+│       ├── services/+page.svelte      # услуги
+│       └── partners/+page.svelte      # партнёры (апровал, рейтинг)
 ```
 
 **PublicLayout.svelte:**

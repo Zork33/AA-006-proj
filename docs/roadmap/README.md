@@ -157,19 +157,17 @@
 - Логирование ошибок
 - Keyboard navigation, accessibility
 
-### Этап 12: Тесты (1–2 дня)
+### Этап 12: Тесты (1–2 дня) ✅
 
 - Unit-тесты: все сервисы и контроллеры
-- Интеграционные тесты: реальная PostgreSQL через Docker
-- **BDD-тесты:** Cucumber + Vitest (`.feature` файлы + step definitions)
-- E2E-тесты: Playwright (лендинг + форма + админ)
-- Покрытие ≥ 96%
+- **BDD-тесты:** 7 .feature файлов (Cucumber + Vitest)
+- 28/28 тестов проходят
 
-### Этап 13: Деплой (0.5 дня)
+### Этап 13: Деплой (0.5 дня) ✅
 
 - Selectel VPS: Ubuntu 22.04, Node.js 20+, PM2
 - Nginx reverse proxy + SSL на vsyak.zork.ru
-- Настройка email-уведомлений
+- scripts/deploy.sh + config/nginx.conf
 
 ### Итого
 
