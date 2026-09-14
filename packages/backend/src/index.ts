@@ -1,12 +1,15 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { fastifyCookie } from '@fastify/cookie';
 import { authRoutes } from './routes/auth/index.js';
 import { servicesRoutes } from './routes/services/index.js';
 import { leadsRoutes } from './routes/leads/index.js';
+import { referralRoutes } from './routes/referral/index.js';
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
+await app.register(fastifyCookie);
 
 app.get('/api/health', async () => ({
   status: 'ok',
@@ -16,6 +19,7 @@ app.get('/api/health', async () => ({
 await app.register(authRoutes);
 await app.register(servicesRoutes);
 await app.register(leadsRoutes);
+await app.register(referralRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0';
