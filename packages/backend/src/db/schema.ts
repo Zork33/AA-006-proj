@@ -1,4 +1,6 @@
 import { pgTable, serial, varchar, text, integer, timestamp, boolean, uniqueIndex, pgEnum } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('admin_role', ['superadmin', 'admin']);
 export const approvalStatusEnum = pgEnum('approval_status', ['pending', 'approved', 'rejected']);
@@ -82,3 +84,39 @@ export const visits = pgTable('visits', {
   userAgent: text('user_agent'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// Relations
+export const adminsRelations = relations(admins, ({ many }) => ({
+  approvedPartners: many(partners),
+}));
+
+export const partnersRelations = relations(partners, ({ one, many }) => ({
+  referrer: one(admins, { fields: [partners.approvedBy], references: [admins.id] }),
+  referrerPartner: one(partners, { fields: [partners.referrerId], references: [partners.id] }),
+  leads: many(leads),
+  visits: many(visits),
+}));
+
+export const leadsRelations = relations(leads, ({ one }) => ({
+  service: one(services, { fields: [leads.serviceId], references: [services.id] }),
+  partner: one(partners, { fields: [leads.partnerId], references: [partners.id] }),
+  feedback: one(leadFeedback),
+}));
+
+export const leadFeedbackRelations = relations(leadFeedback, ({ one }) => ({
+  lead: one(leads, { fields: [leadFeedback.leadId], references: [leads.id] }),
+}));
+
+export const visitsRelations = relations(visits, ({ one }) => ({
+  partner: one(partners, { fields: [visits.partnerId], references: [partners.id] }),
+}));
+
+// Types
+export type Admin = InferSelectModel<typeof admins>;
+export type AdminInsert = InferInsertModel<typeof admins>;
+export type Partner = InferSelectModel<typeof partners>;
+export type PartnerInsert = InferInsertModel<typeof partners>;
+export type Lead = InferSelectModel<typeof leads>;
+export type LeadInsert = InferInsertModel<typeof leads>;
+export type LeadFeedback = InferSelectModel<typeof leadFeedback>;
+export type Visit = InferSelectModel<typeof visits>;
