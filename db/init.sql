@@ -44,6 +44,8 @@ CREATE TABLE partners (
 
 CREATE UNIQUE INDEX idx_partners_token ON partners(referral_token);
 CREATE UNIQUE INDEX idx_partners_code ON partners(partner_code);
+CREATE INDEX idx_partners_referrer ON partners(referrer_id);
+CREATE INDEX idx_partners_region ON partners(region);
 
 -- Leads (Заявки)
 CREATE TABLE leads (
@@ -67,6 +69,9 @@ CREATE INDEX idx_leads_phone ON leads(phone);
 CREATE INDEX idx_leads_partner ON leads(partner_id);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_number ON leads(lead_number);
+CREATE INDEX idx_leads_service ON leads(service_id);
+CREATE INDEX idx_leads_created ON leads(created_at DESC);
+CREATE INDEX idx_leads_dedup ON leads(phone, service_id, partner_id, created_at DESC);
 
 -- Lead Feedback (Отзывы клиентов)
 CREATE TABLE lead_feedback (
