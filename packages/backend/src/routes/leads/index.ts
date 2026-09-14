@@ -33,23 +33,7 @@ export async function leadsRoutes(app: FastifyInstance) {
     // ref: сначала из body, потом из cookie (first-touch реферал)
     const ref = bodyRef || request.cookies?.ref;
 
-    // Дедупликация: телефон + услуга за 24ч
-    if (serviceId) {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const [existing] = await db.select().from(leads)
-        .where(and(
-          eq(leads.phone, phone),
-          eq(leads.serviceId, serviceId),
-          gte(leads.createdAt, yesterday),
-        ))
-        .limit(1);
-
-      if (existing) {
-        return reply.status(409).send({ error: 'Заявка уже принята', leadNumber: existing.leadNumber });
-      }
-    }
-
-    // Определение партнёра по ref-токену
+    // Определение партнёра по ref-токену (до дедупликации)
     let partnerId: number | undefined;
     let source = 'QR';
     if (ref) {
@@ -57,6 +41,29 @@ export async function leadsRoutes(app: FastifyInstance) {
       if (partner && partner.approvalStatus === 'approved') {
         partnerId = partner.id;
         source = 'partner';
+      }
+    }
+
+    // Дедупликация: телефон + услуга + партнёр за 24ч
+    if (serviceId) {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const conditions = [
+        eq(leads.phone, phone),
+        eq(leads.serviceId, serviceId),
+        gte(leads.createdAt, yesterday),
+      ];
+      if (partnerId) {
+        conditions.push(eq(leads.partnerId, partnerId));
+      } else {
+        conditions.push(sql`${leads.partnerId} IS NULL`);
+      }
+
+      const [existing] = await db.select().from(leads)
+        .where(and(...conditions))
+        .limit(1);
+
+      if (existing) {
+        return reply.status(409).send({ error: 'Заявка уже принята', leadNumber: existing.leadNumber });
       }
     }
 

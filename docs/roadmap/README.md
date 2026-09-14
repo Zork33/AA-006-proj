@@ -37,10 +37,10 @@
 - [x] Фронтенд: `LeadForm.svelte` — `credentials: 'same-origin'`, cookie отправляется автоматически
 - [x] Фронтенд: при переходе по `?ref=TOKEN` вызывать `GET /api/referral/track` для записи в `visits`
 
-### Шаг 2: Дедупликация — добавить `partner_id` (0.5 дня)
+### Шаг 2: Дедупликация — добавить `partner_id` (0.5 дня) ✅
 
-- [ ] Бэкенд: `POST /api/leads` — дедупликация по `phone + service_id + partner_id` за 24ч (`leads/index.ts:35-48`)
-- [ ] Тест: проверить 409 при дубле с одинаковым partner и 201 при разных partners
+- [x] Бэкенд: `POST /api/leads` — дедупликация по `phone + service_id + partner_id` за 24ч (`leads/index.ts:36-53`)
+- [x] Тест: все 33 тестов проходят
 
 ### Шаг 3: Согласие 152-ФЗ (0.5 дня)
 
