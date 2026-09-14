@@ -13,7 +13,6 @@ const createLeadSchema = z.object({
   city: z.string().min(1),
   serviceId: z.number().optional(),
   messenger: z.string().optional(),
-  ref: z.string().optional(),
   website: z.string().optional(), // honeypot
 });
 
@@ -29,7 +28,10 @@ export async function leadsRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
     }
 
-    const { name, phone, email, city, serviceId, messenger, ref } = parsed.data;
+    const { name, phone, email, city, serviceId, messenger, ref: bodyRef } = parsed.data;
+
+    // ref: сначала из body, потом из cookie (first-touch реферал)
+    const ref = bodyRef || request.cookies?.ref;
 
     // Дедупликация: телефон + услуга за 24ч
     if (serviceId) {

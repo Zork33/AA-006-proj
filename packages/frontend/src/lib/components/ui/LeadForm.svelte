@@ -18,8 +18,10 @@
     error = '';
 
     try {
+      // ref отправляется автоматически через httpOnly cookie (browser → backend)
       const res = await fetch('/api/leads', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name, phone, email, city,
