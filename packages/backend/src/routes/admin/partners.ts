@@ -84,4 +84,21 @@ export async function adminPartnersRoutes(app: FastifyInstance) {
     const [partner] = await db.select().from(partners).where(eq(partners.id, Number(id)));
     return reply.status(200).send({ rating: partner?.rating });
   });
+
+  // Блокировка/разблокировка партнёра
+  app.patch('/api/admin/partners/:id', { preHandler: requireSuperadmin }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { status } = request.body as { status: string };
+
+    if (!['active', 'blocked'].includes(status)) {
+      return reply.status(400).send({ error: 'Неверный статус' });
+    }
+
+    await db.update(partners).set({
+      status: status as any,
+      updatedAt: new Date(),
+    }).where(eq(partners.id, Number(id)));
+
+    return reply.status(200).send({ status });
+  });
 }

@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { login, register, refresh, setupPassword } from '../../lib/auth.js';
+import { login, register, refresh, setupPassword, requestPasswordReset } from '../../lib/auth.js';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -80,6 +80,16 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Пользователь не найден' });
     }
 
+    return reply.status(200).send(result);
+  });
+
+  app.post('/api/auth/reset', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email } = request.body as { email?: string };
+    if (!email) {
+      return reply.status(400).send({ error: 'Требуется email' });
+    }
+
+    const result = await requestPasswordReset(email);
     return reply.status(200).send(result);
   });
 }

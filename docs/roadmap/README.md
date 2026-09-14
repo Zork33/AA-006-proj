@@ -61,15 +61,15 @@
 - [x] Тестовый суперадмин — вынесен в `db/test-seed.sql` (пароль: test1234)
 - [x] `.env` — `ADMIN_EMAIL` заменён на `ROOT_ADMIN_EMAIL=admin@example.com`
 
-### Шаг 6: Недостающие бэкенд-эндпоинты (1 день)
+### Шаг 6: Недостающие бэкенд-эндпоинты (1 день) ✅
 
 | Эндпоинт | Файл | Описание |
 |---|---|---|
-| `POST /api/admin/services` | `routes/admin/services.ts` (новый) | Создание услуги |
-| `PATCH /api/admin/services/:id` | `routes/admin/services.ts` | Редактирование/скрытие услуги |
-| `PATCH /api/admin/partners/:id` | `routes/admin/partners.ts` | Блокировка/разблокировка |
-| `GET /api/admin/leads/:id` | `routes/admin/leads.ts` | Детали заявки |
-| `POST /api/auth/reset` | `routes/auth/index.ts` | Сброс пароля (email со ссылкой) |
+| `POST /api/admin/services` | `routes/admin/services.ts` (новый) | Создание услуги ✅ |
+| `PATCH /api/admin/services/:id` | `routes/admin/services.ts` | Редактирование/скрытие услуги ✅ |
+| `PATCH /api/admin/partners/:id` | `routes/admin/partners.ts` | Блокировка/разблокировка ✅ |
+| `GET /api/admin/leads/:id` | `routes/admin/leads.ts` | Детали заявки ✅ |
+| `POST /api/auth/reset` | `routes/auth/index.ts` | Сброс пароля (email со ссылкой) ✅ |
 
 ### Шаг 7: Фронтенд — подключить API ко всем страницам (2 дня)
 

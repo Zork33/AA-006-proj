@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyCookie } from '@fastify/cookie';
+import { getEnv } from './lib/env.js';
 import { authRoutes } from './routes/auth/index.js';
 import { servicesRoutes } from './routes/services/index.js';
 import { leadsRoutes } from './routes/leads/index.js';
@@ -8,13 +9,15 @@ import { referralRoutes } from './routes/referral/index.js';
 import { adminPartnersRoutes } from './routes/admin/partners.js';
 import { adminLeadsRoutes } from './routes/admin/leads.js';
 import { adminUsersRoutes } from './routes/admin/users.js';
+import { adminServicesRoutes } from './routes/admin/services.js';
 import { partnerRoutes } from './routes/partner/index.js';
 import { partnerRegisterRoutes } from './routes/partner/register.js';
 import { feedbackRoutes } from './routes/feedback/index.js';
 
 const app = Fastify({ logger: true });
+const env = getEnv();
 
-await app.register(cors, { origin: true });
+await app.register(cors, { origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN });
 await app.register(fastifyCookie);
 
 app.get('/api/health', async () => ({
@@ -29,6 +32,7 @@ await app.register(referralRoutes);
 await app.register(adminPartnersRoutes);
 await app.register(adminLeadsRoutes);
 await app.register(adminUsersRoutes);
+await app.register(adminServicesRoutes);
 await app.register(partnerRoutes);
 await app.register(partnerRegisterRoutes);
 await app.register(feedbackRoutes);

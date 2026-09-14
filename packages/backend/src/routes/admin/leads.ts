@@ -21,6 +21,16 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     return reply.status(200).send(allLeads);
   });
 
+  // Детали заявки
+  app.get('/api/admin/leads/:id', { preHandler: requireAuth }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const [lead] = await db.select().from(leads).where(eq(leads.id, Number(id)));
+    if (!lead) {
+      return reply.status(404).send({ error: 'Заявка не найдена' });
+    }
+    return reply.status(200).send(lead);
+  });
+
   // Смена статуса заявки
   app.patch('/api/admin/leads/:id/status', { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };

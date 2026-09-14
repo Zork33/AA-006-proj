@@ -2,7 +2,9 @@ import { hash, compare } from 'bcrypt';
 import { db } from '../db/index.js';
 import { admins } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { signAccessToken, signRefreshToken, verifyToken, type JwtPayload } from './jwt.js';
+import { signAccessToken, signRefreshToken, signResetToken, verifyResetToken, type JwtPayload } from './jwt.js';
+import nodemailer from 'nodemailer';
+import { getEnv } from './env.js';
 
 const BCRYPT_COST = 12;
 
@@ -74,4 +76,31 @@ export async function setupPassword(adminId: number, newPassword: string) {
     refreshToken: signRefreshToken(payload),
     admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
   };
+}
+
+export async function requestPasswordReset(email: string) {
+  const [admin] = await db.select().from(admins).where(eq(admins.email, email));
+  if (!admin) return { sent: true };
+
+  const token = signResetToken(admin.id);
+  const env = getEnv();
+
+  if (env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS) {
+    const transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_PORT === 465,
+      auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+    });
+
+    const resetUrl = `${env.CORS_ORIGIN === '*' ? 'http://localhost:3000' : env.CORS_ORIGIN}/admin/reset-password?token=${token}`;
+    await transporter.sendMail({
+      from: env.SMTP_USER,
+      to: admin.email,
+      subject: 'Сброс пароля — ВСЯК',
+      html: `<p>Для сброса пароля перейдите по ссылке: <a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действительна 1 час.</p>`,
+    });
+  }
+
+  return { sent: true };
 }
