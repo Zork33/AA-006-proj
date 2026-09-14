@@ -4,7 +4,7 @@
 
 ## Обзор
 
-Сайт-визитка для сбора заявок с QR-кодов и партнёрских каналов. Лендинг, форма заявки, реферальная система, админ-панель, уведомления через MAX.
+Сайт-визитка для сбора заявок с QR-кодов и партнёрских каналов. Лендинг, форма заявки, реферальная система, админ-панель, уведомления по email.
 
 На старте — один лендинг. Архитектура предусматривает возможность масштабирования на несколько лендингов по регионам/ЖК (Берск, Иркутск и т.д.). Каждый партнёр может выбирать, на каких лендингах быть. Реферальная ссылка: `site.com/?ref=TOKEN` (зоны `.ru` и `.com`).
 
@@ -19,7 +19,7 @@
 | Frontend | Svelte + UnoCSS | Selectel / Nginx (статика) |
 | Backend API | Node.js (TypeScript, Fastify) | Selectel VPS |
 | База данных | PostgreSQL 15+ | Selectel Managed PostgreSQL |
-| Уведомления | MAX Bot API | dev.max.ru |
+| Уведомления | Email (SMTP) | |
 | HTTP-клиент | Native `fetch` | — |
 | Очередь (будущее) | BullMQ + Redis | — |
 | QR-коды | Статичные, генерация на клиенте или сервере | — |
@@ -284,9 +284,9 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 4. Модель атрибуции: **first-touch** (первый переход определяет источник)
 5. Если `ref` нет → источник = `QR`
 
-## Уведомления (MAX Bot)
+## Уведомления (Email)
 
-1. После сохранения заявки в БД бэкенд вызывает MAX Bot API
+1. После сохранения заявки в БД бэкенд отправляет email менеджеру
 2. Формат уведомления:
 
 ```text
@@ -299,8 +299,8 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 Дата: 2026-09-12 15:30
 ```
 
-3. API: `POST https://platform-api2.max.ru/bots/{bot_id}/messages/send`
-4. Токен бота хранится в переменных окружения (не в коде)
+3. SMTP-сервер настраивается через переменные окружения
+4. Токен/пароль хранятся в переменных окружения (не в коде)
 
 ## Безопасность
 
@@ -341,10 +341,12 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/leads_db
 
-# MAX Bot
-MAX_BOT_TOKEN=your_bot_token
-MAX_BOT_ID=your_bot_id
-MAX_CHAT_ID=manager_chat_id
+# Email (SMTP)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=noreply@vsyak.zork.ru
+SMTP_PASS=your_smtp_password
+MANAGER_EMAIL=manager@vsyak.zork.ru
 
 # Auth
 JWT_SECRET=your_jwt_secret
@@ -359,13 +361,15 @@ CORS_ORIGIN=https://example.com
 
 ## Деплой
 
+**Домен:** vsyak.zork.ru
+
 ```text
 1. Selectel VPS: создать сервер (Ubuntu 22.04, 2 vCPU, 2GB RAM)
 2. Установить Node.js 20+, PostgreSQL (или подключить Managed)
-3. Настроить Nginx reverse proxy + SSL (Let's Encrypt)
+3. Настроить Nginx reverse proxy + SSL (Let's Encrypt) на vsyak.zork.ru
 4. Запустить бэкенд через PM2
 5. Фронтенд: собрать (`npm run build`) и раздать через Nginx
-6. Настроить MAX-бота на dev.max.ru
+6. Настроить уведомления по email (не MAX-бот)
 7. Настроить алерты на health check
 ```
 
