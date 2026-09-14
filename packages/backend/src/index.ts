@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyCookie } from '@fastify/cookie';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { getEnv } from './lib/env.js';
 import { authRoutes } from './routes/auth/index.js';
 import { servicesRoutes } from './routes/services/index.js';
@@ -19,6 +21,17 @@ const env = getEnv();
 
 await app.register(cors, { origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN });
 await app.register(fastifyCookie);
+
+await app.register(swagger, {
+  openapi: {
+    openapi: '3.0.0',
+    info: { title: 'ВСЯК API', version: '1.0.0' },
+  },
+});
+
+await app.register(swaggerUi, {
+  routePrefix: '/api/docs',
+});
 
 app.get('/api/health', async () => ({
   status: 'ok',

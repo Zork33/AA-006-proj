@@ -90,11 +90,11 @@
 - [x] Суперадмин-страницы (`/admin/admins`) — доступны только `role === 'superadmin'` ✅
 - [x] Создать страницу `/admin/admins` (управление админами) ✅
 
-### Шаг 9:Swagger / OpenAPI (0.5 дня)
+### Шаг 9:Swagger / OpenAPI (0.5 дня) ✅
 
-- [ ] Установить `@fastify/swagger` + `@fastify/swagger-ui`
-- [ ] Подключить в `index.ts`, настроить генерацию из аннотаций
-- [ ] Доступ: `/api/docs` в dev/staging
+- [x] Установить `@fastify/swagger` + `@fastify/swagger-ui` ✅
+- [x] Подключить в `index.ts`, настроить генерацию из аннотаций ✅
+- [x] Доступ: `/api/docs` в dev/staging ✅
 
 ### Шаг 10: Инфраструктура (0.5 дня)
 
