@@ -16,6 +16,7 @@ const createLeadSchema = z.object({
   messenger: z.string().optional(),
   consent: z.literal(true, { errorMap: () => ({ message: 'Требуется согласие на обработку персональных данных' }) }),
   website: z.string().optional(), // honeypot
+  ref: z.string().optional(), // реферальный токен
 });
 
 function generateLeadNumber(prefix: string, id: number): string {

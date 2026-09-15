@@ -5,8 +5,8 @@ import { leads } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../../lib/middleware.js';
 
-function escapeCsv(value: string | number | null | undefined): string {
-  const str = String(value ?? '');
+function escapeCsv(value: string | number | Date | null | undefined): string {
+  const str = value instanceof Date ? value.toISOString() : String(value ?? '');
   if (str.match(/^[=+\-@\t\r]/)) {
     return `"${str.replace(/"/g, '""')}"`;
   }

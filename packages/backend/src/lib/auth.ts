@@ -2,7 +2,7 @@ import { hash, compare } from 'bcrypt';
 import { db } from '../db/index.js';
 import { admins } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { signAccessToken, signRefreshToken, signResetToken, verifyResetToken, type JwtPayload } from './jwt.js';
+import { signAccessToken, signRefreshToken, signResetToken, verifyResetToken, verifyToken, type JwtPayload } from './jwt.js';
 import nodemailer from 'nodemailer';
 import { getEnv } from './env.js';
 
