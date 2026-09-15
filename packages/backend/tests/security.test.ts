@@ -47,7 +47,7 @@ describe('Notifications', () => {
       name: 'Иван',
       phone: '+79991234567',
       email: 'ivan@test.com',
-      city: 'Берск',
+      city: 'Бердск',
       serviceName: 'Сантехника',
       partnerName: 'НашБизнес',
       source: 'QR',

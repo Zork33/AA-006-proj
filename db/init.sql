@@ -36,7 +36,7 @@ CREATE TABLE partners (
   rating          INTEGER NOT NULL DEFAULT 100,  -- 0–100, автоматически
   referral_token  VARCHAR(64) UNIQUE NOT NULL,
   referrer_id     INTEGER REFERENCES partners(id),
-  region          VARCHAR(100),  -- регион (Берск, Иркутск и т.д.)
+  region          VARCHAR(100),  -- регион (Бердск, Иркутск и т.д.)
   residential_complex VARCHAR(255),  -- ЖК (если привязан)
   created_at      TIMESTAMP DEFAULT NOW(),
   updated_at      TIMESTAMP DEFAULT NOW()
@@ -116,4 +116,4 @@ VALUES ('Суперадмин', 'admin@example.com', 'superadmin', NULL);
 
 -- Seed: первый партнёр — наш собственный бизнес (одобрен сразу)
 INSERT INTO partners (name, email, partner_code, referral_token, status, approval_status, rating, region)
-VALUES ('НашБизнес', 'info@nashbiz.ru', 'NASH', 'nash-ref-token-seed', 'active', 'approved', 100, 'Берск');
+VALUES ('НашБизнес', 'info@nashbiz.ru', 'NASH', 'nash-ref-token-seed', 'active', 'approved', 100, 'Бердск');
