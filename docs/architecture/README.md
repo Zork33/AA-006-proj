@@ -4,11 +4,15 @@
 
 ## Обзор
 
-Сайт-визитка для сбора заявок с QR-кодов и партнёрских каналов. Лендинг, форма заявки, реферальная система, админ-панель, уведомления по email.
+Сайт-визитка для сбора заявок с QR-кодов и партнёрских каналов. Лендинг, форма заявки, реферальная система, единая админ-панель, уведомления по email.
 
-На старте — один лендинг. Архитектура предусматривает возможность масштабирования на несколько лендингов по регионам/ЖК (Бердск, Иркутск и т.д.). Каждый партнёр может выбирать, на каких лендингах быть. Реферальная ссылка: `site.com/?ref=TOKEN` (зоны `.ru` и `.com`).
+На старте — один лендинг. Архитектура предусматривает возможность масштабирования на несколько лендингов по регионам/ЖК (Бердск, Иркутск и т.д.). Каждый партнёр может выбирать, на каких лендингах быть. Реферальная ссылка: `site.com/?ref={user_code}` (зоны `.ru` и `.com`).
 
-Партнёры могут приглашать других партнёров через промо-коды (партнёрская рефералка). Система отслеживает цепочку: кто кого позвал (`partners.referrer_id`).
+Партнёры могут приглашать других партнёров. Система отслеживает цепочку: кто кого позвал (`users.referrer_code`).
+
+**Единая таблица `users`** — admins, partners, clients в одной таблице. Каждый пользователь имеет уникальный `user_code` (буквенно-цифровой, 6–20 символов). Many-to-many связь через `user_partners`: партнёр может привязать нескольких сотрудников, один пользователь может работать на нескольких партнёров.
+
+**Единая админ-панель `/admin`** — админ-функции + партнёр-функции в одном месте. Доступ: superadmin видит всё, admin видит админ-функции + партнёрские, partner видит только партнёрские.
 
 **Первый партнёр — наш собственный бизнес.** Он создаётся при деплое (seed). Все реферальные ссылки для новых партнёров генерируются от его имени. Это позволяет сразу тестировать реферальную цепочку.
 
@@ -36,8 +40,8 @@
 ┌─────────────────────────────────────────────────────┐
 │              Frontend (Svelte + UnoCSS)              │
 │  - Лендинг ( Hero → Услуги → Форма → CTA )          │
-│  - Админ-панель ( /admin )                          │
-│  - Сохранение ref-токена в cookie                   │
+│  - Единая админ-панель ( /admin )                    │
+│  - Сохранение user_code в cookie                    │
 └──────────────────────┬──────────────────────────────┘
                        │ REST API
                        ▼
@@ -48,6 +52,8 @@
 │  - GET  /api/admin/leads    — заявки (админ)        │
 │  - POST /api/admin/services — управление услугами   │
 │  - POST /api/admin/partners — управление партнёрами │
+│  - GET  /api/admin/referral — реферальная ссылка    │
+│  - GET  /api/admin/team     — сотрудники (m2m)      │
 │  - GET  /api/health         — health check          │
 └──────────┬───────────────────┬──────────────────────┘
            │                   │
@@ -56,10 +62,11 @@
 │   PostgreSQL     │  │     MAX Bot API              │
 │   (Selectel)     │  │  (dev.max.ru)                │
 │                  │  │                              │
-│  - leads         │  │  Отправка уведомлений        │
-│  - services      │  │  менеджеру о новой заявке    │
-│  - partners      │  │                              │
-│  - visits        │  │  POST /messages/send         │
+│  - users         │  │  Отправка уведомлений        │
+│  - user_partners │  │  менеджеру о новой заявке    │
+│  - leads         │  │                              │
+│  - services      │  │  POST /messages/send         │
+│  - visits        │  │                              │
 └──────────────────┘  └──────────────────────────────┘
 ```
 
@@ -73,19 +80,73 @@
 
 ## Модель данных
 
+### users (Единая таблица пользователей)
+
+> admins, partners, clients — в одной таблице. Подробнее: [docs/variants/002_unified_users.md](../variants/002_unified_users.md)
+
+```sql
+CREATE TABLE users (
+  id              SERIAL PRIMARY KEY,
+  user_code       VARCHAR(20) UNIQUE NOT NULL,  -- буквенно-цифровой код для рефералок (6–20 символов)
+  name            VARCHAR(255) NOT NULL,
+  email           VARCHAR(255) UNIQUE NOT NULL,
+  password_hash   VARCHAR(255),  -- NULL до первого входа (корневой суперадмин)
+  role            VARCHAR(20) NOT NULL DEFAULT 'partner',  -- superadmin | admin | partner
+  region          VARCHAR(100),  -- регион ответственности (NULL = все регионы)
+  residential_complex VARCHAR(255),  -- ЖК ответственности (NULL = все ЖК)
+  status          VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | active | blocked
+  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+  approved_by     INTEGER REFERENCES users(id),
+  approved_at     TIMESTAMP,
+  rating          INTEGER NOT NULL DEFAULT 100,  -- 0–100, автоматически
+  referrer_code   VARCHAR(20) REFERENCES users(user_code),  -- код пригласившего
+  is_test         BOOLEAN NOT NULL DEFAULT false,
+  created_at      TIMESTAMP DEFAULT NOW(),
+  updated_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_users_code ON users(user_code);
+```
+
+**Роли:**
+- **superadmin** — видит всё, управляет админами, одобряет партнёров
+- **admin** — управляет заявками/услугами/партнёрами в своём регионе, также доступ к партнёрским функциям
+- **partner** — видит только партнёрские функции (рефералка, приглашённые, сотрудники)
+
+**Корневой суперадмин:**
+- Создаётся при первом запуске (seed) с `password_hash = NULL`
+- Обязан задать пароль при первом входе
+
+### user_partners (Связь many-to-many)
+
+Партнёр может привязать к себе несколько пользователей (сотрудники/агенты). Один пользователь может работать на нескольких партнёров.
+
+```sql
+CREATE TABLE user_partners (
+  id              SERIAL PRIMARY KEY,
+  user_id         INTEGER NOT NULL REFERENCES users(id),
+  partner_id      INTEGER NOT NULL REFERENCES users(id),
+  created_at      TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, partner_id)
+);
+
+CREATE INDEX idx_user_partners_user ON user_partners(user_id);
+CREATE INDEX idx_user_partners_partner ON user_partners(partner_id);
+```
+
 ### leads (Заявки)
 
 ```sql
 CREATE TABLE leads (
   id              SERIAL PRIMARY KEY,
-  lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер заявки (LEAD-0001 или PARTNER-0001)
+  lead_number     VARCHAR(20) UNIQUE NOT NULL,  -- порядковый номер (LEAD-0001 или PARTNER-0001)
   name            VARCHAR(255) NOT NULL,
   phone           VARCHAR(20) NOT NULL,
   email           VARCHAR(255) NOT NULL,
   city            VARCHAR(255) NOT NULL,
   messenger       VARCHAR(50),  -- WhatsApp, Telegram и т.д. (опционально)
   service_id      INTEGER REFERENCES services(id),
-  partner_id      INTEGER REFERENCES partners(id),
+  partner_id      INTEGER REFERENCES users(id),  -- ID партнёра из единой таблицы
   source          VARCHAR(20) NOT NULL DEFAULT 'QR',  -- QR | partner
   attribution     VARCHAR(20) NOT NULL DEFAULT 'first_touch',
   status          VARCHAR(20) NOT NULL DEFAULT 'NEW',  -- NEW | CONTACTED | QUALIFIED | CONVERTED | COMPLETED | REJECTED | DUPLICATE | CANCELLED
@@ -146,73 +207,16 @@ CREATE TABLE services (
 );
 ```
 
-### partners (Партнёры)
-
-```sql
-CREATE TABLE partners (
-  id              SERIAL PRIMARY KEY,
-  name            VARCHAR(255) NOT NULL,
-  email           VARCHAR(255) UNIQUE NOT NULL,
-  partner_code    VARCHAR(20) UNIQUE NOT NULL,
-  status          VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | active | blocked
-  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
-  approved_by     INTEGER REFERENCES admins(id),
-  approved_at     TIMESTAMP,
-  rating          INTEGER NOT NULL DEFAULT 100,  -- 0–100, автоматически
-  referral_token  VARCHAR(64) UNIQUE NOT NULL,
-  referrer_id     INTEGER REFERENCES partners(id),
-  region          VARCHAR(100),  -- регион (Бердск, Иркутск и т.д.)
-  residential_complex VARCHAR(255),  -- ЖК (если привязан)
-  created_at      TIMESTAMP DEFAULT NOW(),
-  updated_at      TIMESTAMP DEFAULT NOW()
-);
-
-CREATE UNIQUE INDEX idx_partners_token ON partners(referral_token);
-CREATE UNIQUE INDEX idx_partners_code ON partners(partner_code);
-```
-
 **Правила отображения на лендинге:**
 - Партнёр отображается на лендинге ТОЛЬКО если `approval_status = 'approved'` И `rating >= 50`
 - Рейтинг рассчитывается автоматически: +2 за каждую обработанную заявку, -5 за каждый пропущенный ответ, -10 за жалобу клиента
 - Если `rating < 50` — партнёр автоматически скрывается с лендингов
-- Рейтинг пересчитывается раз в сутки (cron-job)
-
-### admins (Администраторы)
-
-```sql
-CREATE TABLE admins (
-  id              SERIAL PRIMARY KEY,
-  name            VARCHAR(255) NOT NULL,
-  email           VARCHAR(255) UNIQUE NOT NULL,
-  role            VARCHAR(20) NOT NULL DEFAULT 'admin',  -- superadmin | admin
-  region          VARCHAR(100),  -- регион ответственности (NULL = все регионы)
-  residential_complex VARCHAR(255),  -- ЖК ответственности (NULL = все ЖК)
-  password_hash   VARCHAR(255),  -- NULL у корневого суперадмина до первого входа
-  is_test         BOOLEAN NOT NULL DEFAULT false,  -- тестовый суперадмин
-  created_at      TIMESTAMP DEFAULT NOW(),
-  updated_at      TIMESTAMP DEFAULT NOW()
-);
-```
-
-**Роли:**
-- **superadmin** — может добавлять админов, управлять всеми регионами, одобрять партнёров
-- **admin** — управляет партнёрами и заявками в своём регионе/ЖК
-
-**Корневой суперадмин:**
-- Создаётся при первом запуске (seed) с `password_hash = NULL`
-- Обязан задать пароль при первом входе
-- Email: задаётся через переменную окружения `ROOT_ADMIN_EMAIL`
-
-**Тестовый суперадмин:**
-- Создаётся только в режиме `NODE_ENV=test`
-- `is_test = true`
-- Используется для автоматических тестов
 
 ```sql
 CREATE TABLE visits (
   id              SERIAL PRIMARY KEY,
   session_id      VARCHAR(64) NOT NULL,
-  partner_id      INTEGER REFERENCES partners(id),
+  partner_id      INTEGER REFERENCES users(id),  -- ID партнёра из единой таблицы
   source          VARCHAR(20) NOT NULL,  -- QR | partner
   ip_address      INET,
   user_agent      TEXT,
@@ -238,17 +242,21 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/admin/login` | Авторизация |
+| POST | `/api/auth/login` | Авторизация |
 | GET | `/api/admin/leads` | Все заявки (с фильтрами) |
 | GET | `/api/admin/leads/:id` | Детали заявки |
 | PATCH | `/api/admin/leads/:id` | Изменение статуса |
 | POST | `/api/admin/services` | Создание услуги |
 | PATCH | `/api/admin/services/:id` | Редактирование услуги |
 | POST | `/api/admin/partners` | Создание партнёра |
-| POST | `/api/partners/register` | Регистрация нового партнёра с промо-кодом пригласившего |
 | PATCH | `/api/admin/partners/:id` | Блокировка/разблокировка |
 | GET | `/api/admin/partners` | Список партнёров |
 | GET | `/api/admin/export` | Экспорт в CSV |
+| GET | `/api/admin/referral` | Реферальная ссылка (partner + admin) |
+| GET | `/api/admin/invites` | Список приглашённых (partner + admin) |
+| GET | `/api/admin/team` | Список сотрудников (many-to-many) |
+| POST | `/api/admin/team` | Привязка сотрудника |
+| DELETE | `/api/admin/team/:id` | Отвязка сотрудника |
 
 ### Системные
 
@@ -266,23 +274,6 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 | POST | `/api/auth/logout` | Выход (очистка cookies) |
 | POST | `/api/auth/setup-password` | Установка пароля (по reset token) |
 | POST | `/api/auth/reset` | Сброс пароля (письмо со ссылкой) |
-
-### Партнёр (личный кабинет)
-
-| Метод | Путь | Описание |
-|---|---|---|
-| GET | `/api/partner/dashboard` | Дашборд: заявки, конверсия, статистика |
-| GET | `/api/partner/dashboard` | Дашборд: заявки, конверсия, статистика |
-| GET | `/api/partner/referral` | Реферальная ссылка и промо-код |
-| GET | `/api/partner/invites` | Список приглашённых партнёров |
-
-## Реферальная логика
-
-1. Партнёр получает ссылку: `https://example.com/?ref=TOKEN`
-2. При переходе по ссылке фронтенд сохраняет `TOKEN` в cookie (TTL 30 дней, path=/, SameSite=Lax)
-3. При отправке формы бэкенд проверяет cookie `ref` → находит партнёра → привязывает к заявке
-4. Модель атрибуции: **first-touch** (первый переход определяет источник)
-5. Если `ref` нет → источник = `QR`
 
 ## Уведомления (Email)
 

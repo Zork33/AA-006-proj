@@ -403,3 +403,17 @@ dd147f5 feat: drizzle config, relations и типы из schema
 bc310b8 feat: SSR для лендинга через +page.server.ts
 68de130 fix: JWT → httpOnly cookies
 ```
+
+---
+
+## Фаза 3: Рефакторинг (ветка v2)
+
+> Подробнее: [docs/variants/002_unified_users.md](../variants/002_unified_users.md)
+
+| Задача | Описание |
+|---|---|
+| Единая таблица `users` | admins + partners + clients → одна таблица |
+| `user_code` | Буквенно-цифровой код (6–20 символов) для реферальных ссылок |
+| Many-to-many | `user_partners`: партнёр → несколько пользователей, пользователь → несколько партнёров |
+| Единая админ-панель | `/admin` — админ-функции + партнёр-функции в одном месте |
+| Удалить `/partner/*` | Все партнёрские эндпоинты переносятся в `/admin/*` |
