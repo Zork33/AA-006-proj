@@ -27,17 +27,16 @@ docker-compose up -d          # PostgreSQL на localhost:5432
 
 ## Структура проекта
 
-Репозиторий пока содержит **документы и схему БД**. Код будет в `packages/backend/` и `packages/frontend/`.
-
 | Путь | Содержание |
 |---|---|
+| `packages/backend/` | Node.js + Fastify + TypeScript API |
+| `packages/frontend/` | Svelte 5 + SvelteKit + UnoCSS |
 | `docs/prd/` | Product Requirements Document |
 | `docs/architecture/` | Архитектура, стек, модели данных, API |
-| `docs/roadmap/` | Поэтапный план разработки (8 этапов) |
+| `docs/roadmap/` | Поэтапный план разработки |
 | `docs/infrastructure/` | Selectel, бюджет, конфигурация сервера |
 | `docs/ui-prompts/` | Промпт для генерации UI |
-| `docs/bdd/` | BDD-сценарии (placeholder) |
-| `db/init.sql` | Схема БД + seed (services, partners, leads, visits) |
+| `db/init.sql` | Схема БД + seed |
 | `docker-compose.yml` | PostgreSQL 15 |
 
 ## Ключевые решения
@@ -52,7 +51,9 @@ docker-compose up -d          # PostgreSQL на localhost:5432
 - Админы привязаны к регионам/ЖК, суперадмины — ко всему
 - Корневой суперадмин: пароль задаётся при первом входе
 - Тестовый суперадмин: только в `NODE_ENV=test`
-- Авторизация MVP: email + пароль (JWT). Далее: OAuth (Google, Яндекс, VK)
+- Авторизация MVP: email + пароль (JWT httpOnly cookies). Далее: OAuth (Google, Яндекс, VK)
+- SSR для лендинга: `+page.server.ts` загружает данные на сервере
+- Drizzle ORM: schema с relations, типы через `InferSelectModel`
 - Отзыв клиента: рейтинг 1–5, влияет на рейтинг партнёра (+2 при 4–5★, -3 при 1–2★)
 - Название проекта: **не зафиксировано** (рабочее: Proj)
 

@@ -260,12 +260,12 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/auth/login` | Вход (email + пароль → JWT) |
+| POST | `/api/auth/login` | Вход (email + пароль → JWT в httpOnly cookies) |
 | POST | `/api/auth/register` | Регистрация (для партнёров) |
-| POST | `/api/auth/refresh` | Обновление access token |
+| POST | `/api/auth/refresh` | Обновление access token (из refresh cookie) |
+| POST | `/api/auth/logout` | Выход (очистка cookies) |
+| POST | `/api/auth/setup-password` | Установка пароля (по reset token) |
 | POST | `/api/auth/reset` | Сброс пароля (письмо со ссылкой) |
-| GET | `/api/auth/oauth/:provider` | OAuth redirect (Google, Яндекс, VK) |
-| GET | `/api/auth/oauth/:provider/callback` | OAuth callback |
 
 ### Партнёр (личный кабинет)
 
@@ -316,10 +316,12 @@ CREATE INDEX idx_visits_session ON visits(session_id);
 **MVP (email + пароль):**
 - Эндпоинт: `POST /api/auth/login` → JWT (access + refresh)
 - Access token: 15 минут, refresh: 30 дней
+- Хранение: httpOnly cookies (access_token, refresh_token)
 - Хранение пароля: bcrypt (cost factor 12)
 - Сброс пароля: `POST /api/auth/reset` → письмо со ссылкой
 - Для партнёров: вход по email + пароль
 - Для админов: вход по email + пароль
+- Middleware читает JWT из cookies (с fallback на Authorization header)
 
 **После MVP (OAuth):**
 - Google, Яндекс, VK, Одноклассники

@@ -356,3 +356,50 @@
 | 6 | ~~Продолжить разработку (Фаза 2)~~ | Готово |
 | 7 | Тестирование на реальных пользователях (Фаза 3) | Следующий |
 | 8 | Запуск | После тестирования |
+
+---
+
+## Улучшения после Фазы 2 (SkillsMP)
+
+После завершения Фазы 2 применены 8 скиллов из SkillsMP для повышения качества кода:
+
+### Безопасность (security-review)
+- `setup-password` теперь через reset token (не adminId)
+- `JWT_SECRET` обязателен (мин. 32 символа, без дефолта)
+- Rate limiting на login, setup-password, reset, register
+- XSS-защита в email templates (`escapeHtml`)
+- CSV injection защита (`escapeCsv`)
+- `needPasswordSetup` не отдаёт adminId
+
+### PostgreSQL (postgres-patterns)
+- Индексы: `idx_leads_service`, `idx_leads_created`, `idx_leads_dedup`, `idx_partners_referrer`, `idx_partners_region`
+- Миграция: `db/migrations/001_add_missing_indexes.sql`
+
+### API паттерны (senior-backend, nodejs-backend-patterns)
+- Zod валидация на всех PATCH эндпоинтах
+- Обработка ошибок в `refresh()` (401 вместо 500)
+- Rate limit на register
+
+### Auth (auth-implementation-patterns)
+- JWT → httpOnly cookies (access_token, refresh_token)
+- Middleware читает из cookies + fallback Authorization header
+- Новый эндпоинт `POST /api/auth/logout`
+
+### Drizzle ORM (drizzle-orm-expert)
+- `drizzle.config.ts` для drizzle-kit
+- Relations для всех таблиц
+- Типы: `InferSelectModel`, `InferInsertModel`
+
+### SvelteKit (sveltekit)
+- SSR для лендинга: `+page.server.ts`
+- Frontend: `$props()`, `$derived` вместо `onMount` fetch
+
+### Git коммиты
+```
+951eb5a fix: исправить критические баги из security-review
+28511f9 feat: оптимизация индексов PostgreSQL
+70a2519 fix: исправить критические баги из ревью скиллов
+dd147f5 feat: drizzle config, relations и типы из schema
+bc310b8 feat: SSR для лендинга через +page.server.ts
+68de130 fix: JWT → httpOnly cookies
+```
