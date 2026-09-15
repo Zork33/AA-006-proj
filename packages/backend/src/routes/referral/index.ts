@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { db } from '../../db/index.js';
-import { visits, partners } from '../../db/schema.js';
+import { visits, referralCodes, partners } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 
@@ -12,8 +12,8 @@ export async function referralRoutes(app: FastifyInstance) {
       return reply.status(200).send({ tracked: false });
     }
 
-    const [partner] = await db.select().from(partners).where(eq(partners.referralToken, ref));
-    if (!partner || partner.approvalStatus !== 'approved') {
+    const [code] = await db.select().from(referralCodes).where(eq(referralCodes.code, ref));
+    if (!code || !code.isActive || !code.ownerPartnerId) {
       return reply.status(200).send({ tracked: false });
     }
 
@@ -27,13 +27,13 @@ export async function referralRoutes(app: FastifyInstance) {
     const sessionId = crypto.randomUUID();
     await db.insert(visits).values({
       sessionId,
-      partnerId: partner.id,
+      partnerId: code.ownerPartnerId,
       source: 'partner',
       ipAddress: request.ip,
       userAgent: request.headers['user-agent'] || '',
     });
 
-    return reply.status(200).send({ tracked: true, partnerId: partner.id });
+    return reply.status(200).send({ tracked: true, partnerId: code.ownerPartnerId });
   });
 
   app.get('/api/referral/current', async (request, reply) => {
@@ -42,11 +42,12 @@ export async function referralRoutes(app: FastifyInstance) {
       return reply.status(200).send({ ref: null });
     }
 
-    const [partner] = await db.select().from(partners).where(eq(partners.referralToken, ref));
-    if (!partner || partner.approvalStatus !== 'approved') {
+    const [code] = await db.select().from(referralCodes).where(eq(referralCodes.code, ref));
+    if (!code || !code.isActive || !code.ownerPartnerId) {
       return reply.status(200).send({ ref: null });
     }
 
-    return reply.status(200).send({ ref, partnerId: partner.id, partnerName: partner.name });
+    const [partner] = await db.select().from(partners).where(eq(partners.id, code.ownerPartnerId));
+    return reply.status(200).send({ ref, partnerId: code.ownerPartnerId, partnerName: partner?.name });
   });
 }

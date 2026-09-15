@@ -1,7 +1,7 @@
 import { hash, compare } from 'bcrypt';
 import { db } from '../db/index.js';
-import { admins } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { users, userRoles, userPartners } from '../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 import { signAccessToken, signRefreshToken, signResetToken, verifyResetToken, verifyToken, type JwtPayload } from './jwt.js';
 import nodemailer from 'nodemailer';
 import { getEnv } from './env.js';
@@ -17,37 +17,53 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export async function login(email: string, password: string) {
-  const [admin] = await db.select().from(admins).where(eq(admins.email, email));
-  if (!admin) return null;
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+  if (!user) return null;
 
   // Корневой суперадмин: password_hash = NULL → первый вход
-  if (!admin.passwordHash) {
-    return { needPasswordSetup: true, adminId: admin.id, email: admin.email, role: admin.role };
+  if (!user.passwordHash) {
+    return { needPasswordSetup: true, userId: user.id, email: user.email };
   }
 
-  const valid = await comparePassword(password, admin.passwordHash);
+  const valid = await comparePassword(password, user.passwordHash);
   if (!valid) return null;
 
-  const payload: JwtPayload = { id: admin.id, email: admin.email, role: admin.role };
+  // Получаем роль и partnerId
+  const [role] = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+  if (!role) return null;
+
+  const payload: JwtPayload = {
+    id: user.id,
+    email: user.email,
+    role: role.role as JwtPayload['role'],
+    partnerId: role.partnerId || undefined,
+  };
+
+  // Обновляем last_login_at
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
-    admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
+    user: { id: user.id, name: user.name, email: user.email, role: role.role },
   };
 }
 
 export async function register(name: string, email: string, password: string) {
-  const existing = await db.select().from(admins).where(eq(admins.email, email));
+  const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing.length > 0) return null;
 
   const passwordHash = await hashPassword(password);
-  const [admin] = await db.insert(admins).values({ name, email, passwordHash, role: 'admin' }).returning();
+  const [user] = await db.insert(users).values({ name, email, passwordHash, status: 'active' }).returning();
 
-  const payload: JwtPayload = { id: admin.id, email: admin.email, role: admin.role };
+  // Создаём роль service_user
+  await db.insert(userRoles).values({ userId: user.id, role: 'service_user' });
+
+  const payload: JwtPayload = { id: user.id, email: user.email, role: 'service_user' };
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
-    admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
+    user: { id: user.id, name: user.name, email: user.email, role: 'service_user' },
   };
 }
 
@@ -59,36 +75,54 @@ export async function refresh(refreshTokenStr: string) {
     return null;
   }
 
-  const [admin] = await db.select().from(admins).where(eq(admins.id, payload.id));
-  if (!admin) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, payload.id));
+  if (!user) return null;
 
-  const newPayload: JwtPayload = { id: admin.id, email: admin.email, role: admin.role };
+  const [role] = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+  if (!role) return null;
+
+  const newPayload: JwtPayload = {
+    id: user.id,
+    email: user.email,
+    role: role.role as JwtPayload['role'],
+    partnerId: role.partnerId || undefined,
+  };
+
   return {
     accessToken: signAccessToken(newPayload),
     refreshToken: signRefreshToken(newPayload),
   };
 }
 
-export async function setupPassword(adminId: number, newPassword: string) {
+export async function setupPassword(userId: string, newPassword: string) {
   const passwordHash = await hashPassword(newPassword);
-  await db.update(admins).set({ passwordHash, updatedAt: new Date() }).where(eq(admins.id, adminId));
+  await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
 
-  const [admin] = await db.select().from(admins).where(eq(admins.id, adminId));
-  if (!admin) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) return null;
 
-  const payload: JwtPayload = { id: admin.id, email: admin.email, role: admin.role };
+  const [role] = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+  if (!role) return null;
+
+  const payload: JwtPayload = {
+    id: user.id,
+    email: user.email,
+    role: role.role as JwtPayload['role'],
+    partnerId: role.partnerId || undefined,
+  };
+
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
-    admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
+    user: { id: user.id, name: user.name, email: user.email, role: role.role },
   };
 }
 
 export async function requestPasswordReset(email: string) {
-  const [admin] = await db.select().from(admins).where(eq(admins.email, email));
-  if (!admin) return { sent: true };
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+  if (!user) return { sent: true };
 
-  const token = signResetToken(admin.id);
+  const token = signResetToken(user.id);
   const env = getEnv();
 
   if (env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS) {
@@ -102,7 +136,7 @@ export async function requestPasswordReset(email: string) {
     const resetUrl = `${env.CORS_ORIGIN === '*' ? 'http://localhost:3000' : env.CORS_ORIGIN}/admin/reset-password?token=${token}`;
     await transporter.sendMail({
       from: env.SMTP_USER,
-      to: admin.email,
+      to: user.email,
       subject: 'Сброс пароля — ВСЯК',
       html: `<p>Для сброса пароля перейдите по ссылке: <a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действительна 1 час.</p>`,
     });

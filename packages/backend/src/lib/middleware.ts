@@ -8,10 +8,9 @@ declare module 'fastify' {
 }
 
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
-  // Try cookie first, then Authorization header
-  const token = request.cookies?.access_token || 
-    (request.headers.authorization?.startsWith('Bearer ') 
-      ? request.headers.authorization.slice(7) 
+  const token = request.cookies?.access_token ||
+    (request.headers.authorization?.startsWith('Bearer ')
+      ? request.headers.authorization.slice(7)
       : null);
 
   if (!token) {
@@ -25,11 +24,20 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
   }
 }
 
-export async function requireSuperadmin(request: FastifyRequest, reply: FastifyReply) {
+export async function requireSuperAdmin(request: FastifyRequest, reply: FastifyReply) {
   await requireAuth(request, reply);
   if (reply.sent) return;
 
-  if (request.user?.role !== 'superadmin') {
+  if (request.user?.role !== 'super_admin') {
+    return reply.status(403).send({ error: 'Доступ запрещён' });
+  }
+}
+
+export async function requirePartnerAdmin(request: FastifyRequest, reply: FastifyReply) {
+  await requireAuth(request, reply);
+  if (reply.sent) return;
+
+  if (request.user?.role !== 'super_admin' && request.user?.role !== 'partner_admin') {
     return reply.status(403).send({ error: 'Доступ запрещён' });
   }
 }

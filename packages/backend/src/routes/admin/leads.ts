@@ -21,7 +21,6 @@ const statusSchema = z.object({
 });
 
 export async function adminLeadsRoutes(app: FastifyInstance) {
-  // Список всех заявок
   app.get('/api/admin/leads', { preHandler: requireAuth }, async (request, reply) => {
     const { status, partnerId } = request.query as { status?: string; partnerId?: string };
 
@@ -29,7 +28,7 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     if (status) {
       allLeads = await db.select().from(leads).where(eq(leads.status, status as any));
     } else if (partnerId) {
-      allLeads = await db.select().from(leads).where(eq(leads.partnerId, Number(partnerId)));
+      allLeads = await db.select().from(leads).where(eq(leads.partnerId, partnerId));
     } else {
       allLeads = await db.select().from(leads);
     }
@@ -37,7 +36,6 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     return reply.status(200).send(allLeads);
   });
 
-  // Детали заявки
   app.get('/api/admin/leads/:id', { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const [lead] = await db.select().from(leads).where(eq(leads.id, Number(id)));
@@ -47,7 +45,6 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     return reply.status(200).send(lead);
   });
 
-  // Смена статуса заявки
   app.patch('/api/admin/leads/:id/status', { preHandler: requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = statusSchema.safeParse(request.body);
@@ -56,12 +53,10 @@ export async function adminLeadsRoutes(app: FastifyInstance) {
     }
 
     const { status } = parsed.data;
-
     await db.update(leads).set({ status: status as any, updatedAt: new Date() }).where(eq(leads.id, Number(id)));
     return reply.status(200).send({ status });
   });
 
-  // Экспорт CSV
   app.get('/api/admin/export', { preHandler: requireAuth }, async (_request, reply) => {
     const allLeads = await db.select().from(leads);
 

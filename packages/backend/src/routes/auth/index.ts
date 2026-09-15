@@ -4,7 +4,7 @@ import { login, register, refresh, requestPasswordReset, hashPassword } from '..
 import { rateLimitMiddleware } from '../../lib/security.js';
 import { verifyResetToken } from '../../lib/jwt.js';
 import { db } from '../../db/index.js';
-import { admins } from '../../db/schema.js';
+import { users, userRoles } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 const COOKIE_OPTIONS = {
@@ -15,8 +15,8 @@ const COOKIE_OPTIONS = {
 };
 
 function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string) {
-  reply.setCookie('access_token', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 }); // 15 min
-  reply.setCookie('refresh_token', refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 }); // 30 days
+  reply.setCookie('access_token', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 });
+  reply.setCookie('refresh_token', refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 });
 }
 
 function clearAuthCookies(reply: FastifyReply) {
@@ -33,10 +33,6 @@ const registerSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-});
-
-const refreshSchema = z.object({
-  refreshToken: z.string(),
 });
 
 const setupPasswordSchema = z.object({
@@ -61,7 +57,7 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     setAuthCookies(reply, result.accessToken, result.refreshToken);
-    return reply.status(200).send({ admin: result.admin });
+    return reply.status(200).send({ user: result.user });
   });
 
   app.post('/api/auth/register', { preHandler: rateLimitMiddleware }, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -76,7 +72,7 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     setAuthCookies(reply, result.accessToken, result.refreshToken);
-    return reply.status(201).send({ admin: result.admin });
+    return reply.status(201).send({ user: result.user });
   });
 
   app.post('/api/auth/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -101,30 +97,35 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
     }
 
-    let adminId: number;
+    let userId: string;
     try {
       const decoded = verifyResetToken(parsed.data.token);
-      adminId = decoded.id;
+      userId = decoded.id;
     } catch {
       return reply.status(401).send({ error: 'Невалидный или просроченный токен' });
     }
 
     const passwordHash = await hashPassword(parsed.data.newPassword);
-    await db.update(admins).set({ passwordHash, updatedAt: new Date() }).where(eq(admins.id, adminId));
+    await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, userId));
 
-    const [admin] = await db.select().from(admins).where(eq(admins.id, adminId));
-    if (!admin) {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
       return reply.status(404).send({ error: 'Пользователь не найден' });
     }
 
+    const [role] = await db.select().from(userRoles).where(eq(userRoles.userId, user.id));
+    if (!role) {
+      return reply.status(404).send({ error: 'Роль не найдена' });
+    }
+
     const { signAccessToken, signRefreshToken } = await import('../../lib/jwt.js');
-    const payload = { id: admin.id, email: admin.email, role: admin.role };
+    const payload = { id: user.id, email: user.email, role: role.role as any, partnerId: role.partnerId || undefined };
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
-    
+
     setAuthCookies(reply, accessToken, refreshToken);
     return reply.status(200).send({
-      admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
+      user: { id: user.id, name: user.name, email: user.email, role: role.role },
     });
   });
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '../../db/index.js';
 import { services } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { requireAuth, requireSuperadmin } from '../../lib/middleware.js';
+import { requireAuth, requireSuperAdmin } from '../../lib/middleware.js';
 
 const createServiceSchema = z.object({
   name: z.string().min(1),
@@ -20,7 +20,7 @@ const updateServiceSchema = z.object({
 
 export async function adminServicesRoutes(app: FastifyInstance) {
   // Создание услуги (суперадмин)
-  app.post('/api/admin/services', { preHandler: requireSuperadmin }, async (request, reply) => {
+  app.post('/api/admin/services', { preHandler: requireSuperAdmin }, async (request, reply) => {
     const parsed = createServiceSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Неверные данные', details: parsed.error.flatten() });
@@ -31,7 +31,7 @@ export async function adminServicesRoutes(app: FastifyInstance) {
   });
 
   // Редактирование услуги
-  app.patch('/api/admin/services/:id', { preHandler: requireSuperadmin }, async (request, reply) => {
+  app.patch('/api/admin/services/:id', { preHandler: requireSuperAdmin }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const parsed = updateServiceSchema.safeParse(request.body);
     if (!parsed.success) {
