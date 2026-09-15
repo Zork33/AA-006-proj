@@ -6,6 +6,7 @@
   let password = $state('');
   let loading = $state(false);
   let error = $state('');
+  let showPassword = $state(false);
 
   async function handleLogin(e: Event) {
     e.preventDefault();
@@ -62,12 +63,16 @@
         <label for="password" class="block text-sm font-medium text-[#666] mb-1">Пароль</label>
         <input
           id="password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           bind:value={password}
           required
           class="w-full px-4 py-3 rounded-xl border border-[#E5E5E5] focus:border-[#6B9B7A] focus:outline-none"
           placeholder="Ваш пароль"
         />
+        <label class="flex items-center gap-2 mt-2 text-sm text-[#666] cursor-pointer select-none">
+          <input type="checkbox" bind:checked={showPassword} class="rounded" />
+          Показать пароль
+        </label>
       </div>
 
       {#if error}
