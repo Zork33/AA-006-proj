@@ -43,7 +43,7 @@
         return;
       }
 
-      setAuthData(data.admin?.role);
+      setAuthData(data.user?.role);
       goto('/admin');
     } catch {
       error = 'Ошибка сети';
@@ -94,7 +94,7 @@
         return;
       }
 
-      setAuthData(data.admin?.role);
+      setAuthData(data.user?.role);
       goto('/admin');
     } catch {
       setupError = 'Ошибка сети';

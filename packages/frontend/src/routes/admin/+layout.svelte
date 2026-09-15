@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { isAuthenticated, loadAuthData, subscribeAuth, isSuperadmin } from '$lib/stores/auth';
+  import { isAuthenticated, loadAuthData, subscribeAuth, isSuperAdmin } from '$lib/stores/auth';
   import AdminLayout from '$lib/components/layout/AdminLayout.svelte';
   import type { Snippet } from 'svelte';
 
@@ -36,7 +36,7 @@
     const isLoginPage = currentPath === '/admin/login';
     if (!isAuthenticated() && !isLoginPage && currentPath) {
       goto('/admin/login');
-    } else if (SUPERADMIN_ONLY.includes(currentPath) && !isSuperadmin()) {
+    } else if (SUPERADMIN_ONLY.includes(currentPath) && !isSuperAdmin()) {
       goto('/admin');
     } else if (isAuthenticated() || isLoginPage) {
       ready = true;
