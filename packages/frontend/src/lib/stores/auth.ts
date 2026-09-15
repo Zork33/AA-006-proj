@@ -19,8 +19,9 @@ export function getUserRole() {
 }
 
 export function isAuthenticated() {
-  // Check if access_token cookie exists
-  return document.cookie.includes('access_token=');
+  // httpOnly cookies недоступны через document.cookie,
+  // поэтому проверяем role в localStorage (ставится при успешном логине)
+  return localStorage.getItem(ROLE_KEY) !== null;
 }
 
 export function setAuthData(role?: string) {
