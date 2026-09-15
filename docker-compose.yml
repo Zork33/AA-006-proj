@@ -19,7 +19,9 @@ services:
       retries: 5
 
   backend:
-    build: ./packages/backend
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
     container_name: leads-backend
     restart: unless-stopped
     depends_on:
