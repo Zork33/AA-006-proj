@@ -20,7 +20,7 @@ import { feedbackRoutes } from './routes/feedback/index.js';
 const app = Fastify({ logger: true });
 const env = getEnv();
 
-await app.register(cors, { origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN });
+await app.register(cors, { origin: !env.CORS_ORIGIN || env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN });
 await app.register(fastifyCookie);
 
 await app.register(swagger, {
