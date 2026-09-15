@@ -1,21 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import PublicLayout from '$lib/components/layout/PublicLayout.svelte';
   import LeadForm from '$lib/components/ui/LeadForm.svelte';
 
-  let services = $state<Array<{id: number; name: string; description: string}>>([]);
+  let { data } = $props();
+  let services = $derived(data.services);
 
-  onMount(async () => {
-    try {
-      const res = await fetch('/api/services');
-      if (res.ok) {
-        services = await res.json();
-      }
-    } catch {}
-  });
-
-  function handleLeadSubmit(data: any) {
-    console.log('Lead submitted:', data);
+  function handleLeadSubmit(leadData: any) {
+    console.log('Lead submitted:', leadData);
   }
 </script>
 
