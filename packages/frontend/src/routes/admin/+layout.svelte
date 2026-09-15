@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { isAuthenticated, loadTokens, subscribeAuth, isSuperadmin } from '$lib/stores/auth';
+  import { isAuthenticated, loadAuthData, subscribeAuth, isSuperadmin } from '$lib/stores/auth';
   import AdminLayout from '$lib/components/layout/AdminLayout.svelte';
   import type { Snippet } from 'svelte';
 
@@ -13,7 +13,7 @@
   const SUPERADMIN_ONLY = ['/admin/admins'];
 
   onMount(() => {
-    loadTokens();
+    loadAuthData();
 
     const unsubPage = page.subscribe((p) => {
       currentPath = p.url.pathname;

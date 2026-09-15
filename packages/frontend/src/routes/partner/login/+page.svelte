@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { setTokens } from '$lib/stores/auth';
+  import { setAuthData } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
 
   let email = $state('');
@@ -31,7 +31,7 @@
         return;
       }
 
-      setTokens(data.accessToken, data.refreshToken, data.admin?.role);
+      setAuthData(data.admin?.role);
       goto('/partner');
     } catch {
       error = 'Ошибка сети';

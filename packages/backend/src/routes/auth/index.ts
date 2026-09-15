@@ -7,6 +7,23 @@ import { db } from '../../db/index.js';
 import { admins } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+};
+
+function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken: string) {
+  reply.setCookie('access_token', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 }); // 15 min
+  reply.setCookie('refresh_token', refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 }); // 30 days
+}
+
+function clearAuthCookies(reply: FastifyReply) {
+  reply.clearCookie('access_token', { path: '/' });
+  reply.clearCookie('refresh_token', { path: '/' });
+}
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -43,7 +60,8 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(200).send({ needPasswordSetup: true, email: result.email });
     }
 
-    return reply.status(200).send(result);
+    setAuthCookies(reply, result.accessToken, result.refreshToken);
+    return reply.status(200).send({ admin: result.admin });
   });
 
   app.post('/api/auth/register', { preHandler: rateLimitMiddleware }, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -57,21 +75,24 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(409).send({ error: 'Пользователь уже существует' });
     }
 
-    return reply.status(201).send(result);
+    setAuthCookies(reply, result.accessToken, result.refreshToken);
+    return reply.status(201).send({ admin: result.admin });
   });
 
   app.post('/api/auth/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
-    const parsed = refreshSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.status(400).send({ error: 'Требуется refreshToken' });
+    const refreshToken = request.cookies?.refresh_token;
+    if (!refreshToken) {
+      return reply.status(401).send({ error: 'Требуется refreshToken' });
     }
 
-    const result = await refresh(parsed.data.refreshToken);
+    const result = await refresh(refreshToken);
     if (!result) {
+      clearAuthCookies(reply);
       return reply.status(401).send({ error: 'Невалидный токен' });
     }
 
-    return reply.status(200).send(result);
+    setAuthCookies(reply, result.accessToken, result.refreshToken);
+    return reply.status(200).send({ ok: true });
   });
 
   app.post('/api/auth/setup-password', { preHandler: rateLimitMiddleware }, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -98,9 +119,11 @@ export async function authRoutes(app: FastifyInstance) {
 
     const { signAccessToken, signRefreshToken } = await import('../../lib/jwt.js');
     const payload = { id: admin.id, email: admin.email, role: admin.role };
+    const accessToken = signAccessToken(payload);
+    const refreshToken = signRefreshToken(payload);
+    
+    setAuthCookies(reply, accessToken, refreshToken);
     return reply.status(200).send({
-      accessToken: signAccessToken(payload),
-      refreshToken: signRefreshToken(payload),
       admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
     });
   });
@@ -114,5 +137,10 @@ export async function authRoutes(app: FastifyInstance) {
 
     const result = await requestPasswordReset(parsed.data.email);
     return reply.status(200).send(result);
+  });
+
+  app.post('/api/auth/logout', async (request: FastifyRequest, reply: FastifyReply) => {
+    clearAuthCookies(reply);
+    return reply.status(200).send({ ok: true });
   });
 }

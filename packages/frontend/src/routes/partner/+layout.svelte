@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { isAuthenticated, loadTokens, subscribeAuth } from '$lib/stores/auth';
+  import { isAuthenticated, loadAuthData, subscribeAuth } from '$lib/stores/auth';
   import type { Snippet } from 'svelte';
 
   let { children }: { children: Snippet } = $props();
@@ -10,7 +10,7 @@
   let currentPath = $state('');
 
   onMount(() => {
-    loadTokens();
+    loadAuthData();
 
     const unsubPage = page.subscribe((p) => {
       currentPath = p.url.pathname;
